@@ -1,0 +1,3 @@
+#(echo .L BDT_combined.h && echo BDT l && echo l.Combine_FT_FD\(${1}\) && echo .q) | clas12root -b -l
+(echo .L BDT_combined.h && echo BDT l && echo l.Compute_Systematics\(${1}\) && echo .q) | clas12root -b -l
+rm submit_${1}_Combined

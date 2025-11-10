@@ -1,0 +1,166 @@
+############################################
+## global settings & macros
+############################################     
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  
+stages:
+  - build
+  - test
+  - doc
+  - deploy
+
+.latex: &latex
+  stage: doc
+  image: blang/latex:ubuntu
+
+.standalone: &standalone    
+  image: rootproject/root:6.22.00-ubuntu20.04
+  before_script:
+    - apt-get update
+    - apt-get -y install python
+
+.doxygen: &doxygen
+  <<: *standalone
+  before_script:
+    - apt-get update
+    - apt-get -y install doxygen
+  stage: doc
+
+.ctest: &ctest  
+  stage: test
+  script:
+    - cd build
+    - source setup.sh
+    - ctest --output-on-failure
+  artifacts:
+    when: on_failure
+    paths:
+      - "*.ref"    
+
+.cmake: &cmake    
+  stage: build
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DRooUnfoldTests=on ..
+    - make
+  artifacts:
+    paths:
+      - build
+
+.GNUmake: &GNUmake    
+  stage: build
+  script:
+    make -j1 NOROOFIT=1
+  artifacts:
+    paths:
+      - libRooUnfold.so
+      - RooUnfoldDict_rdict.pcm
+      - libRooUnfold.rootmap
+      - RooUnfold/*.py
+
+############################################
+## building
+############################################     
+    
+compile_cmake:
+  <<: *standalone
+  <<: *cmake
+
+compile_GNUmake:
+  <<: *standalone
+  <<: *GNUmake  
+
+
+
+############################################           
+## testing      
+############################################
+
+test_cmake:
+  <<: *standalone
+  <<: *ctest  
+  dependencies:
+    - compile_cmake
+
+############################################         
+## documentation
+############################################
+
+doxygen:
+  <<: *doxygen
+  artifacts:
+    paths:
+      - build/doxygen
+  dependencies: []      
+  script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make doxygen
+
+doc_bayes_errors:
+  <<: *latex
+  script:
+    - cd doc/bayes_errors
+    - pdflatex bayes_errors.tex
+    - pdflatex bayes_errors.tex
+  artifacts:
+    paths:
+      - doc/bayes_errors/bayes_errors.pdf
+    
+doc_phystat2011:
+  <<: *latex
+  script:
+    - cd doc/phystat2011
+    - pdflatex phystat2011_adye.tex
+    - pdflatex phystat2011_adye.tex    
+  artifacts:
+    paths:
+      - doc/phystat2011/phystat2011_adye.pdf
+
+doc_unfolding2010:      
+  <<: *latex
+  script:
+    - cd doc/unfolding2010
+    - latex adye_tim.tex
+    - dvipdf adye_tim.dvi
+  artifacts:
+    paths:
+      - doc/unfolding2010/adye_tim.pdf
+      - doc/unfolding2010/adye_tim.pdf      
+
+############################################         
+## documentation
+############################################
+
+pages:
+   # Custom docker image providing the needed tools to deploy in DFS
+  image: gitlab-registry.cern.ch/ci-tools/ci-web-deployer:latest
+
+  script:
+  - mkdir -p public
+  - mv build/doxygen/html/* public
+  - mv doc/*/*.pdf public
+  - deploy-dfs
+
+  before_script: []
+  after_script: []
+
+  stage: deploy
+
+  dependencies:
+    - doxygen
+    - doc_bayes_errors
+    - doc_phystat2011
+    - doc_unfolding2010
+
+  artifacts:
+    name: "RooUnfoldDoc_${CI_COMMIT_REF_NAME}"
+    expire_in: 6 mos
+    paths:
+    - public
+
+  when: manual

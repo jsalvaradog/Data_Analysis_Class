@@ -1,0 +1,2 @@
+(echo .L BDT_FD.h && echo BDT l && echo l.Training_on_bins\(l.Data, 0, ${1}, false\) && echo .q) | clas12root -b -l
+rm submit_FD_${1}

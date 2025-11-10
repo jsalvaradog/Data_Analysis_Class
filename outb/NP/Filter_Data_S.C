@@ -1,0 +1,38 @@
+
+#include <sstream>
+//#include "Data_P.C"
+void Filter_Data_S(){
+    
+  TChain *chain= new TChain("pDVCS");
+  //chain->AddFile(std::string("/work/clas12/jsalvg/RGA-Analysis/outb/P/Analysis/Tested_Quality_Data.root").c_str());
+  for(int i=1; i<=64; i++)
+  {
+  	chain->Add(Form("../P/Analysis/bin_%i/Tested_Quality_Data.root",i));
+  }
+
+  
+  TTree* Tree = chain ;
+  TCut TheCut =TCut("bestCandidateFlag==1 && strip_Xbj <1 && strip_Xbj >0 && t_Ph <0 && strip_Q2 > 1.0 && strip_W > 2 && strip_Nuc_P > 0.35 && strip_El_P > 1.0 && strip_Ph_P>2  && strip_El_vz < 10 && strip_El_vz > -12 && TMath::Abs(Phi_Nuc - Phi_Ph) < 2 && TMath::Abs(t_Nuc - t_Ph) < 2 && TMath::Sqrt(Xbal * Xbal + Ybal*Ybal + Zbal*Zbal) <0.5  && _strip_Nuc_BDT > 0.0 && theta_gamma_X<1.0");
+
+  TFile f0("Training_data_DVCS_temp.root","RECREATE");
+  TTree* sTree = Tree->CopyTree(TheCut);
+  sTree->SetMaxTreeSize(4000000000LL);
+  sTree->SetBranchStatus("_strip_Nuc_BDT",0);
+
+  TFile f("Training_data_DVCS.root","RECREATE");
+  printf("... copying tree\n");
+  TTree* sTree2 = sTree->CopyTree("bestCandidateFlag==1");
+  sTree2->SetMaxTreeSize(4000000000LL);
+    
+  printf("... tree copied ... \n");
+  sTree2->Write();
+  f0.Close();
+  f.Close();
+
+  gSystem->Exec("rm Training_data_DVCS_temp.root");
+  return;
+}
+
+
+
+

@@ -1,0 +1,93 @@
+Need to set the cuts
+Need to have the RGA comparison file in this same folder (Improved_data_P.root)
+need to fix training variables, ranges,and titles in training_vars
+
+names are optional
+
+.L BDT.h
+BDT l
+l.Training(l.cut, l.DVCS, l.Pi0, l.Vars)
+l.Training_vars(l.Data, l.DVCS, l.Pi0, l.cut);
+l.Add_BDT_var_Formula(l.cut, l.Data, l.TData, l.Vars);
+l.Add_BDT_var_Formula(l.cut, l.DVCS, l.TDVCS, l.Vars);
+l.Add_BDT_var_Formula(l.cut, l.Pi0, l.TPi0, l.Vars);
+l.Explore(l.TData, l.TDVCS, l.cut)
+l.Estimate_Pi0(l.TData, TCut("bestCandidateFlag==1"), l.cut + TCut(Form("_strip_Nuc_BDT>%f ",-0.4 + 0.8*10/20)))
+l.Add_BDT_var2(l.TData);
+l.Best(10, l.TData, l.TDVCS, l.cut)
+l.Stack(l.cut, "N_Ph_in==1")
+
+l.Is_Pi0()
+
+l.Training_on_bins(l.Folder + l.TData, 60000);
+l.To_bin_or_not_to_bin(l.Data, 60000);
+l.P_vs_NP(l.Data, 60000);
+
+l.Maxime(l.cut);
+l.Add_BDT_var_float(l.cut, l.Pi0, l.TPi0);
+
+
+######################################
+Sys_cut computation
+Systematics due to exclusivity cuts
+
+.L BDT_Sys_cuts.h
+BDT l
+l.cut = l.cut_sys
+l.Training(l.cut, l.DVCS, l.Pi0, l.Vars)
+l.Training_vars(l.Data, l.DVCS, l.Pi0, l.cut);
+l.Add_BDT_var(l.cut, l.Data, l.TData, l.Vars);
+l.Add_BDT_var(l.cut, l.DVCS, l.TDVCS, l.Vars);
+l.Add_BDT_var(l.cut, l.Pi0, l.TPi0, l.Vars);
+l.Explore(l.TData, l.TDVCS, l.cut)
+
+.L BDT_Sys_cuts.h
+BDT l
+l.cut = l.cut_sys
+l.Training_on_bins(l.Folder + l.TData, 60000);
+
+
+#######################################
+Sys_phi_BDT computation
+Systematics due to choice of N_Phi and BDT_value
+.L BDT_Sys_phi.h
+BDT l
+l.Systematic_phi_BDT()
+
+.L BDT_Sys_BDT.h
+BDT l
+l.Systematic_phi_BDT()
+
+
+
+
+
+#######################################
+Sys_phi computation
+Systematics due to choice of BDT cut
+
+Data_Pi0flag
+
+#######################################
+Mostafa vars
+    Vars.push_back(TString("strip_Ph_P"));
+    Vars.push_back(TString("strip_Ph_Theta"));
+    Vars.push_back(TString("strip_El_P"));
+    Vars.push_back(TString("strip_El_Theta"));
+    Vars.push_back(TString("mm2_eg"));
+    Vars.push_back(TString("theta_gamma_e"));
+    Vars.push_back(TString("t_Ph"));
+
+My vars
+
+    Vars.push_back(TString("mm2_eg"));
+    Vars.push_back(TString("mm2_e"));
+    Vars.push_back(TString("mm2_g"));
+
+
+My_vars2
+    Vars.push_back(TString("mm2_eg"));
+    Vars.push_back(TString("mm2_e"));
+    Vars.push_back(TString("mm2_g"));
+    Vars.push_back(TString("t_Ph"));
+

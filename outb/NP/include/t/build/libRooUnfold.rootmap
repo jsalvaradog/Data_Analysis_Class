@@ -1,0 +1,76 @@
+{ decls }
+namespace RooUnfolding {  }
+class TH1;
+class TH2;
+template <typename Hist, typename Hist2D> class RooUnfoldResponseT;
+namespace RooUnfolding { class RooFitHist; }
+template <typename Hist, typename Hist2D> class RooUnfoldT;
+template <typename Hist, typename Hist2D> class RooUnfoldBayesT;
+template <typename Hist, typename Hist2D> class RooUnfoldBinByBinT;
+template <typename Hist, typename Hist2D> class RooUnfoldGPT;
+template <typename Hist, typename Hist2D> class RooUnfoldIdsT;
+template <typename Hist, typename Hist2D> class RooUnfoldInvertT;
+template <typename Hist, typename Hist2D> class RooUnfoldPoissonT;
+template <typename Hist, typename Hist2D> class RooUnfoldSvdT;
+template <typename Hist, typename Hist2D> class RooUnfoldTUnfoldT;
+
+[ libRooUnfold.so ]
+# List of selected classes
+class RooFitUnfoldResponse
+class RooUnfold
+class RooUnfoldBayes
+class RooUnfoldBayesT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldBayesT<TH1,TH2>
+class RooUnfoldBinByBin
+class RooUnfoldBinByBinT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldBinByBinT<TH1,TH2>
+class RooUnfoldErrors
+class RooUnfoldFunc
+class RooUnfoldGP
+class RooUnfoldGPT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldGPT<TH1,TH2>
+class RooUnfoldIds
+class RooUnfoldIdsT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldIdsT<TH1,TH2>
+class RooUnfoldInvert
+class RooUnfoldInvertT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldInvertT<TH1,TH2>
+class RooUnfoldParms
+class RooUnfoldPoisson
+class RooUnfoldPoissonT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldPoissonT<TH1,TH2>
+class RooUnfoldResponse
+class RooUnfoldResponseT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldResponseT<TH1,TH2>
+class RooUnfoldSpec
+class RooUnfoldSvd
+class RooUnfoldSvd::SVDUnfold
+class RooUnfoldSvdT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldSvdT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>::SVDUnfold
+class RooUnfoldSvdT<TH1,TH2>
+class RooUnfoldSvdT<TH1,TH2>::SVDUnfold
+class RooUnfoldT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldT<TH1,TH2>
+class RooUnfoldTUnfold
+class RooUnfoldTUnfoldT<RooUnfolding::RooFitHist,RooUnfolding::RooFitHist>
+class RooUnfoldTUnfoldT<TH1,TH2>
+class RooUnfolding::RooFitHist
+class TUnfoldBinningV17
+class TUnfoldBinningXMLV17
+class TUnfoldDensityV17
+class TUnfoldIterativeEMV17
+class TUnfoldSysV17
+class TUnfoldV17
+header RooUnfoldResponse.h
+header RooUnfoldErrors.h
+header RooFitUnfold.h
+header RooUnfoldParms.h
+header RooUnfoldSvd.h
+header RooUnfoldFitHelpers.h
+header TUnfoldBinning.h
+header TUnfoldBinningXML.h
+header TUnfoldDensity.h
+header TUnfoldIterativeEM.h
+header TUnfoldSys.h
+header TUnfold.h
+# List of selected typedefs and outer classes
