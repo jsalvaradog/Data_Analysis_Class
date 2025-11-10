@@ -1,0 +1,2 @@
+(echo .L BDT.h && echo BDT l && echo l.config\(\) && echo l.xsec_on_bins\(${1}\) && echo .q) | clas12root -b -l
+rm sssubmit_${1}

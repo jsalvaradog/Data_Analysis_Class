@@ -1,0 +1,30 @@
+#!/bin/bash
+
+skip_list=(11 12 13 14 15 16 17 18 19 20 21 23 24 25 26 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 67 68 69 70 71 72 73 8 86 89 9)
+
+for i in {1..94}
+#for i in "${skip_list[@]}"
+#for i in 1 5 6 7 27 32 33 34 35 36 37 38 39 41 42 43 48 49 50 58 60 61 62 63 64 67 68 69 74 75 81 82 86 88 93
+do
+#if [[ " ${skip_list[@]} " =~ " $i " ]]; 
+#    then
+#        continue
+#    fi
+
+    filename=/work/clas12/jsalvg/pass2_RGA-Analysis/inb/NP_BSA/sssubmit_${i}
+    echo $i
+    echo "#!/bin/bash" >> ${filename}
+    echo "#SBATCH --account=clas12" >> ${filename}
+    echo "#SBATCH --partition=priority" >> ${filename}
+    echo "#SBATCH --job-name=NP_Max_$i" >> ${filename}
+    echo "#SBATCH --mail-user=jsalvg@jlab.org" >> ${filename}
+    echo "#SBATCH --output=/work/clas12/jsalvg/pass2_RGA-Analysis/inb/NP_BSA/Logs/log_$i.txt" >> ${filename}
+    echo "#SBATCH --error=/work/clas12/jsalvg/pass2_RGA-Analysis/inb/NP_BSA/Errors/err_$i.txt" >> ${filename}
+    echo "#SBATCH --time=24:00:00" >> ${filename}
+    echo "#SBATCH --gres=disk:5000" >> ${filename}
+    echo "#SBATCH --ntasks=1" >> ${filename}
+    echo "#SBATCH --mem-per-cpu=4000" >> ${filename}
+    echo "/work/clas12/jsalvg/pass2_RGA-Analysis/inb/NP_BSA/Simu_Builder_xs $i" >> ${filename}
+    sbatch ${filename}
+
+done

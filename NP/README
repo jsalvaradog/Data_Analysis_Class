@@ -1,0 +1,135 @@
+Need to set the cuts
+Need to have the RGA comparison file in this same folder (Improved_data_P.root)
+need to fix training variables, ranges,and titles in training_vars
+
+
+#SBATCH --qos=longrun
+#SBATCH --time=3-00:00:00
+
+
+
+names are optional
+
+.L BDT_DD.h
+BDT l
+l.Training(l.cut, l.DVCS, l.Pi0, l.Vars)
+l.Add_BDT_var_Formula(l.cut, l.Data, l.TData, l.Vars);
+l.Add_BDT_var_Formula(l.cut, l.DVCS, l.TDVCS, l.Vars);
+l.Explore(l.TData, l.TDVCS, l.cut)
+l.Training_vars(l.Data, l.DVCS, l.Pi0, l.cut);
+l.Add_BDT_var_Formula(l.cut, l.Pi0, l.TPi0, l.Vars);
+l.Filter(l.TData, l.cut + TCut("_strip_Nuc_BDT > 0.08"), TString("Data_NP_Theta_g_5.root"));
+l.Add_BDT_var(l.cut, l.BM_Sim, l.TBM_Sim, l.Vars);
+l.Compute_BM_Matrix();
+
+l.Add_BDT_var(l.cut, l.Data, l.TData, l.Vars);
+l.Filter(TData, cut + vut_b+ TCut(Form("_strip_Nuc_BDT > %f",BDT_Value)), TString("Data_NP_Theta_g_5.root"));
+
+...::: Category :::...
+...::: Have to choose with the boolean! :::...
+.L BDT.h
+BDT l
+l.config()
+l.TrainingCategory(l.cut, l.DVCS, l.Pi0, l.Vars);
+l.Training_vars(l.Data, l.DVCS, l.Pi0, l.cut);
+gSystem->Exec("mv Analysis/Training_vars.pdf Analysis/Training_vars_All.pdf");
+l.Training_vars(l.Data, l.DVCS, l.Pi0, l.cut + TCut("strip_Ph_Theta < 5"));
+gSystem->Exec("mv Analysis/Training_vars.pdf Analysis/Training_vars_FT.pdf");
+l.Training_vars(l.Data, l.DVCS, l.Pi0, l.cut + TCut("strip_Ph_Theta > 5"));
+gSystem->Exec("mv Analysis/Training_vars.pdf Analysis/Training_vars_FD.pdf");
+l.Add_BDT_var(l.cut, l.Data, l.TData, l.Vars);
+l.Add_BDT_var(l.cut, l.DVCS, l.TDVCS, l.Vars);
+l.Explore(l.TData, l.TDVCS, l.cut)
+l.Add_BDT_var(l.cut, l.Pi0, l.TPi0, l.Vars);
+
+l.Merge_Bins(l.TData,"Tested1_Quality_Data.root");
+l.Merge_Bins(l.TDVCS);
+l.Merge_Bins(l.TPi0);
+l.Merge_Bins("Tsidis.root","Tsidis.root")
+l.Merge_Bins(l.TBM_Sim);
+l.Merge_Bins(TString("wf")+l.TBM_Sim);
+l.Merge_Bins("Tested_1gamma.root","Tested_1gamma.root")
+l.Merge_Bins("Tested_1gamma_1.root","Tested_1gamma_1.root")
+l.Merge_Bins("Tested_1gamma_eta.root","Tested_1gamma_eta.root")
+
+l.Merge_Bins(l.TData,"Merged_Data.root");
+l.Merge_Bins(l.TDVCS,"Merged_DVCS.root");
+l.Merge_Bins(l.TPi0,"Merged_Pi0.root");
+l.Merge_Bins("Tsidis.root","Tsidis.root")
+
+
+l.Merge_Bins(l.TBM_Sim);
+l.Compute_BM_Matrix();
+
+
+l.Add_BDT_var(l.cut, "../Quality_Fake_Data_NP.root", "TFake_Data.root", l.Vars);
+l.Filter("TFake_Data.root", l.cut + TCut(Form("_strip_Nuc_BDT > %f",l.BDT_value)), TString("Remaining_Fake_Data.root"));
+
+l.Best(12, l.TData, l.TDVCS, l.cut)
+l.Filter(l.TData, l.cut + TCut("_strip_Nuc_BDT > 0.0"), TString("Data_NP_Theta_g_5.root"));
+l.Estimate_DVCS(l.TData, l.cut +TCut(Form("_strip_Nuc_BDT_Data > %f && mm2_eg<4.0",l.BDT_value)), l.cut + TCut(Form("_strip_Nuc_BDT>%f && mm2_eg<4.0",l.BDT_value)))
+
+#To reconstruct the ROC curve using simulated data
+l.Add_BDT_var(l.cut, "/home/munoz/Documents/RG-A:DVCS/Validation/Quality_Sim_DVCS_no_P_Sample.root", "Tested_Sim2_DVCS.root", l.Vars);
+l.Add_BDT_var(l.cut, "/home/munoz/Documents/RG-A:DVCS/Validation/Quality_Pi_as_DVCS_no_P_Sample.root", "Tested_Sim2_Pi0.root", l.Vars);
+
+
+
+l.Add_BDT_var(l.cut, "/home/munoz/Documents/RG-A:DVCS/files/Sample_Train_Sim_DVCS_NP.root", "Tested_Sim_DVCS.root", l.Vars);
+l.Add_BDT_var(l.cut, "/home/munoz/Documents/RG-A:DVCS/files/Sample_Pi_as_DVCS_NP.root", "Tested_Sim_Pi0.root", l.Vars);
+
+
+l.Add_BDT_var(l.cut, l.P_case, l.TP_case, l.Vars);
+l.Explore(l.TData, l.TP_case, l.cut)
+l.Stack(l.cut, "_strip_Nuc_BDT > 0.0") //Check data that pass both analysis
+
+  
+(BDT cut 0.08 (k=12) for FT)
+  
+l.Estimate_DVCS(l.TData, l.cut +TCut("_strip_Nuc_BDT_Data > 0.0 && mm2_eg<4.0 && strip_Nuc_Theta > 5 && strip_Nuc_Theta < 65"), l.cut )
+l.Estimate_DVCS(l.TData, l.cut +TCut("_strip_Nuc_BDT_Data > 0.0 && mm2_eg<4.0 && strip_Nuc_Theta > 5 && strip_Nuc_Theta < 65"), l.cut + TCut(Form("_strip_Nuc_BDT>%f && mm2_eg<4.0 && cos2theta > 0.1 && strip_Nuc_Theta > 5 && strip_Nuc_Theta < 65",l.BDT_value)))
+
+
+
+#######################################
+To Combine the data
+
+Folder = "Combined/"
+cut="bestCandidateFlag==1 &&\
+strip_Xbj <1 && strip_Xbj >0 && t_Ph <0 && strip_Q2 > 1.0 && \
+strip_W > 2 && strip_El_P > 1.0 && strip_Ph_P>2  && strip_El_vz < 10 && strip_El_vz > -12 && \
+theta_gamma_e > 5 && abs(t_Ph/strip_Q2)<1 && N_Ph <3";
+
+
+.L BDT.h
+BDT l
+l.Add_BDT_var(l.cut, l.TData, "Tested1.root", l.Vars,"/home/munoz/Documents/RG-A:2/NP/FT/");
+l.Add_BDT_var(l.cut, "Tested1.root", TData, l.Vars,"/home/munoz/Documents/RG-A:2/NP/FD/");
+
+
+l.Stack(l.cut + TCut("mm2_eg<4.0 && cos2theta > 0.1 && strip_Nuc_Theta > 5 && strip_Nuc_Theta < 65"), "strip_Nuc_chi2pid!=2212")
+
+
+#######################################
+Mostafa vars
+    Vars.push_back(TString("strip_Ph_P"));
+    Vars.push_back(TString("strip_Ph_Theta"));
+    Vars.push_back(TString("strip_El_P"));
+    Vars.push_back(TString("strip_El_Theta"));
+    Vars.push_back(TString("mm2_eg"));
+    Vars.push_back(TString("theta_gamma_e"));
+    Vars.push_back(TString("t_Ph"));
+
+My vars
+
+    Vars.push_back(TString("mm2_eg"));
+    Vars.push_back(TString("mm2_e"));
+    Vars.push_back(TString("mm2_g"));
+
+
+My_vars2
+    Vars.push_back(TString("mm2_eg"));
+    Vars.push_back(TString("mm2_e"));
+    Vars.push_back(TString("mm2_g"));
+    Vars.push_back(TString("t_Ph"));
+
