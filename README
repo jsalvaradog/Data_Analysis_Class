@@ -69,7 +69,7 @@ If you have evaluated the contamination before, and the BDT has not changed. You
 * HALL A METHOD * 
 This method can be time-consuming in the first 2 stages. I recommend to use a bin-by-bin evaluation and merge if needed.
 
-You need to run the 'Training_on_bins' or the 'Maxime' method three times with the following configuration.
+You need to run the 'Training_on_bins' or the 'Get_Contamination_Maxime' method three times with the following configuration.
 1. Set generate=true;  recast=false; add_BDT_Max=false; # It will read the eppi0 file and generate the toy MC decay of pi0s. Output directory is the 'Maxime_bkg' variable
 2. Set generate=false; recast=true;  add_BDT_Max=false; # Re-arrange the contamination files into dedicated .root files for each bin. Output directory is the 'Maxime_bkg' variable
 3. Set generate=false; recast=false; add_BDT_Max=true;  # Add the BDT score to the contamination files. 
@@ -124,6 +124,9 @@ l.Filter(l.TData, l.cut + TCut("_strip_Nuc_BDT > 0.08"), TString("Data_NP_Theta_
 l.Merge_Bins(l.TData,"Merged_Data.root");
 
 # Compute Bin Migration matrix
+# There are templates for 1D, 3D (Q2,xB,t) and 4D (Q2,xB,t,phi) bin migration
+# My analysis showed negligible bin migration, so it was actually never used implemented.
+# However, it was tested and cross-checked
 # It requires a merged BM file beforehand.
 l.Compute_BM_Matrix();
 
@@ -131,7 +134,7 @@ l.Compute_BM_Matrix();
 Single_BSA(dataset,NBinsPhi)
 
 # Get background-subtracted BSA measurements via Hall A method.
-l.Maxime(l.cut, l.BDT_value, bin_number, NBinsPhi);
+l.Get_Contamination_Maxime(l.cut, l.BDT_value, bin_number, NBinsPhi);
 
 # To extract background-subtracted BSA measurements via Hall B method.
 l.Get_Contamination_Mostafa(l.cut, l.BDT_value, NBinsPhi, eta); 
