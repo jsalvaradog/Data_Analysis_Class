@@ -7,7 +7,6 @@ TH1* BDT::Get_Contamination_Mostafa(TCut cut, double BDT_cut, int Nphi, bool eta
   TChain *Pi02g;
   TChain *Pi02gData;
   TString output;
-  TCut cut2g;      
   TString branch;
 
   //Convert cut to string

@@ -22,6 +22,7 @@ int BDT::get_index(double t, double Q, double x, double p)
   return -1;
 }
 
+
 void BDT::Compute_BM_Matrix()
 {
   int Nbins = 9;
@@ -31,7 +32,6 @@ void BDT::Compute_BM_Matrix()
   //{
   //   bdts.at(i-1) = Best_BDT(i);
   // }
-  std::vector<double> bdts;
 
   TCut cut_Qx_arr[35];
   cut_Qx_arr[0] = TCut("bestCandidateFlag==1 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
@@ -92,7 +92,7 @@ void BDT::Compute_BM_Matrix()
 
   // test bin is l=3, for bin 24.
   TChain *MCData_temp = new TChain("pDVCS");
-  MCData_temp->Add(TString("Analysis/Merged_DVCS.root"));
+  MCData_temp->Add(TString("Analysis/wfMerged_DVCS.root"));
 
   TChain *Data_temp = new TChain("pDVCS");
   Data_temp->Add(TString("Analysis/Merged_Data.root"));
@@ -102,7 +102,7 @@ void BDT::Compute_BM_Matrix()
   TCut cut_sel = TCut("abs(t_Ph/strip_Q2)<1");
   TCut cut_sel_mc = TCut("abs(t_Ph_MC/strip_Q2_MC)<1");
 
-  for (int l = 2; l < 5; l++) //; l<35; l++)
+  for (int l = 2; l < 35; l++) //; l<35; l++)
   {
     TCut cut_Qx = cut_Qx_arr[l];
     TString String_cut = cut_Qx.GetTitle();
@@ -129,6 +129,8 @@ void BDT::Compute_BM_Matrix()
     TH1D *input_true_MC = new TH1D("input_true_MC", "input_true_MC", N, bins);
     TH1D *input_reco_MC = new TH1D("input_reco_MC", "input_reco_MC", N, bins);
     TH2D *response_matrix = new TH2D("response_matrix", "response_matrix", N, bins, N, bins);
+    // Define response matrix
+    static RooUnfoldResponse response(input_reco_MC, input_true_MC, response_matrix);
 
     input->Sumw2();
     input_true_MC->Sumw2();
@@ -137,11 +139,9 @@ void BDT::Compute_BM_Matrix()
 
     cout << "\n==================================== Fill input ===================================" << endl;
     Data->Project("input", var, cut + cut_kin + cut_sel + cut_ref + TCut("_strip_Nuc_BDT > GetBDTCut(strip_Xbj, strip_Q2, t_Ph)"));
-    MCData->Project("input_reco_MC", var, (cut + cut_kin + cut_sel + cut_ref + TCut("_strip_Nuc_BDT > GetBDTCut(strip_Xbj, strip_Q2, t_Ph)")));
+    MCData->Project("input_reco_MC", var, (cut + cut_kin + cut_sel + cut_ref + TCut("_strip_Nuc_BDT > GetBDTCut(strip_Xbj, strip_Q2, t_Ph)"))*TCut("rWeight"));
     MCData->Project("input_true_MC", var_MC, cut + cut_kin_mc + cut_sel_mc);
-    MCData->Project("response_matrix", var_MC + TString(":") + var, cut + cut_kin + cut_sel + cut_ref + TCut("_strip_Nuc_BDT > GetBDTCut(strip_Xbj, strip_Q2, t_Ph)"));
-    // Define response matrix
-    static RooUnfoldResponse response(input_reco_MC, input_true_MC, response_matrix);
+    //MCData->Project("response_matrix", var_MC + TString(":") + var, cut + cut_kin + cut_sel + cut_ref + TCut("_strip_Nuc_BDT > GetBDTCut(strip_Xbj, strip_Q2, t_Ph)"));
 
     std::cout << input_reco_MC->Integral() << " " << input_true_MC->Integral() << " " << response_matrix->GetEntries() << std::endl;
 
@@ -151,14 +151,14 @@ void BDT::Compute_BM_Matrix()
     TTreeFormula *formula = new TTreeFormula("cutFormula", (cut_ref + TCut("_strip_Nuc_BDT > GetBDTCut(strip_Xbj, strip_Q2, t_Ph)")).GetTitle(), MCData);
     TTreeFormula *KinWindow = new TTreeFormula("KinWindow", (cut_kin + cut_sel).GetTitle(), MCData);
     TTreeFormula *KinWindow_MC = new TTreeFormula("KinWindow_MC", (cut_kin_mc + cut_sel_mc).GetTitle(), MCData);
-    /*   
+    
     static std::vector<double> *var_rec, *var_gen;
     static std::vector<int> *flag;
-    double rWeight=1.0;
+    double rWeight;
 
     MCData->SetBranchAddress(var, &var_rec);
     MCData->SetBranchAddress(var_MC, &var_gen);
-    //MCData->SetBranchAddress("rWeight", &rWeight);
+    MCData->SetBranchAddress("rWeight", &rWeight);
     MCData->SetBranchAddress("bestCandidateFlag", &flag);
 
     for(int i=0; i<entries; i++)
@@ -179,7 +179,7 @@ void BDT::Compute_BM_Matrix()
               {
                 response.Miss(var_gen->at(j)); //No weight
               }
-            }
+            }/*
             else if(KinWindow->EvalInstance() && !KinWindow_MC->EvalInstance())
             {
               std::cout<<"Fake event"<<endl;
@@ -193,11 +193,11 @@ void BDT::Compute_BM_Matrix()
             else //Generated and recontructed in a bin outside this analysis
             {
               continue;
-            }
+            }*/
           }
         }
         }
-    */
+    
     
     TH2 *R1 = response.Hresponse();
     std::cout << cut_Qx.GetTitle() << std::endl;
@@ -222,10 +222,10 @@ void BDT::Compute_BM_Matrix()
     cout << "\n==================================== UNFOLD ===================================" << endl;
 
     // MC test. Replace input by input_reco_MC
-    RooUnfoldBayes unfold(&response, input, 5);
+    RooUnfoldBayes unfold(&response, input_reco_MC, 5);
     TH1D *output = (TH1D *)unfold.Hunfold();
 
-    RooUnfoldSvd unfold_sys(&response, input);
+    RooUnfoldSvd unfold_sys(&response, input_reco_MC);
     TH1D *output_sys = (TH1D *)unfold_sys.Hunfold();
 
     // Write output

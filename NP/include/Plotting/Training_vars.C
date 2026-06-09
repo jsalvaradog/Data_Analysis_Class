@@ -17,8 +17,8 @@ void BDT::Training_vars(TString Data, TString MC_DVCS, TString MC_Pi0, TCut cut)
   else
     pDVCS_Pi0     = (TTree*)input4->Get("eppi0");
 
-  TFile *input5 = new TFile("/lustre24/expphy/volatile/clas12/jsalvg/simulation/clasdis/inb/1gamma/Quality_Pi_as_DVCS_NP.root","READ");
-  TTree *pDVCS_Pi0_2 = (TTree*)input5->Get("pDVCS");
+  //TFile *input5 = new TFile("/lustre24/expphy/volatile/clas12/jsalvg/simulation/clasdis/inb/1gamma/Quality_Pi_as_DVCS_NP.root","READ");
+  TTree *pDVCS_Pi0_2 = (TTree*)input4->Get("pDVCS");
 
   auto hs1 = new THStack("hs1","M^{2}_{eX} (GeV^{2})");
   auto hs2 = new THStack("hs2","M^{2}_{e#gamma X} (GeV^{2})");

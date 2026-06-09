@@ -3,7 +3,7 @@
 void BDT::Add_BDT_var_float(TCut cutSB, TString Data, TString output)
 {
 
-  cout << "-Start TMVA-" << endl;
+  cout << "\n-Start TMVA-" << endl;
 
   cout << " Adding Variables to Reader" << endl;
   // --- Create the Reader object
@@ -42,28 +42,24 @@ void BDT::Add_BDT_var_float(TCut cutSB, TString Data, TString output)
 
 
   //========================================
-  signal->SetBranchStatus("*", 1); // enable all branches  
-  if (signal->GetListOfBranches()->FindObject("_strip_Nuc_BDT")) {
-    signal->SetBranchStatus("_strip_Nuc_BDT", 0);
-  }
+  //signal->SetBranchStatus("*", 1); // enable all branches
   
-  TFile f(Folder + output, "RECREATE");
-  TTree *Tree = signal->CopyTree(cutSB);
-
-    if (!Tree) {
-        std::cerr << "No events...exiting" << std::endl;
-        
-	 delete reader;
- 	 delete signal;
-  	 delete Tree;
-  	 f.Close();
-        return;
-    }
-
-
-  Long64_t nentries = Tree->GetEntries();
+  int nentries = signal->GetEntries();
   cout << "Reading File with " << nentries << " to Add MVA response" << endl;
   cout << " Reading Variables" << endl;
+
+  TFile f(Folder + output, "RECREATE");
+
+  if(nentries == 0)
+  {
+    signal->Write();
+    f.Close();
+    return;
+  }
+
+  TTree *Tree = signal->CopyTree(cutSB);
+
+  Tree->SetBranchStatus("*", 1); // enable all branches
 
     for(int l=0; l<Vars.size(); l++)
     {
@@ -109,7 +105,7 @@ void BDT::Add_BDT_var_float(TCut cutSB, TString Data, TString output)
   Tree->Write();
   cout << "closing file" << endl;
 
-  cout << "Added " << Tree->GetEntries() << " MVA variables to file" << endl;
+  cout << "Added " << Tree->GetEntries() << " MVA variables to file\n" << endl;
 
   delete reader;
   delete signal;

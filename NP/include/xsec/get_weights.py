@@ -10,12 +10,15 @@ from sklearn.model_selection import train_test_split
 from hep_ml.metrics_utils import ks_2samp_weighted
 import sys
 
-hist_settings = {'bins': 100, 'density': True, 'alpha': 0.7}
+hist_settings = {'bins': 50, 'density': True, 'alpha': 0.7}
 
-def draw_distributions(original, target, new_original_weights):
+def draw_distributions(original, target, new_original_weights, xlim_dict=None):
     plt.figure(figsize=[15, 7])
     for id, column in enumerate(branches, 1):
-        xlim = numpy.percentile(numpy.hstack([target[column]]), [0.01, 99.99])
+        if xlim_dict is None or column not in xlim_dict:
+            xlim = numpy.percentile(numpy.hstack([target[column]]), [0.01, 99.99])
+        else:
+            xlim = xlim_dict[column]
         plt.subplot(2, 3, id)
         plt.hist(original[column], weights=new_original_weights, range=xlim, **hist_settings)
         plt.hist(target[column], range=xlim, **hist_settings)
@@ -23,6 +26,7 @@ def draw_distributions(original, target, new_original_weights):
         print('KS over ', column, ' = ', ks_2samp_weighted(original[column], target[column], 
                                                            weights1=new_original_weights, weights2=numpy.ones(len(target), dtype=float)))
         
+
 def draw_distributions2(original, target, new_original_weights, branches):
     plt.figure(figsize=[7.5, 3.5])
     for id, column in enumerate(branches, 1):
@@ -36,7 +40,7 @@ def draw_distributions2(original, target, new_original_weights, branches):
 
 def main(args):
     global branches
-    branches = ['strip_El_P','strip_El_Theta','strip_El_Phi','strip_Ph_P','strip_Ph_Theta','strip_Ph_Phi','mm2_eg']
+    branches = ['strip_El_P','strip_El_Theta','strip_El_Phi','strip_Ph_P','strip_Ph_Theta','strip_Ph_Phi','mm2_eg','Ph_eff']
     global branches0
     branches0 = ['strip_El_P','strip_El_Theta','strip_El_Phi','strip_Ph_P','strip_Ph_Theta','strip_Ph_Phi']
     MC_File = args[0]
@@ -67,7 +71,7 @@ def main(args):
 
     #print(len(indices),len(data_dict['strip_El_P']))
 
-    df = pd.DataFrame({branch: [entry[indices[count]] for count, entry in enumerate(data_dict[branch])] for branch in branches})
+    df = pd.DataFrame({branch: [entry[indices[count]] if branch != 'Ph_eff' else entry for count, entry in enumerate(data_dict[branch])] for branch in branches})
     original0=df
     original=original0.drop(['mm2_eg'],axis=1)
 
@@ -76,6 +80,8 @@ def main(args):
     #Get info from Data
     ####################################
     print("Getting info from Data...")
+    # Remove 'Ph_eff' from branches for data iteration
+    branches = [b for b in branches if b != 'Ph_eff']
 
     file = uproot.open(Data_File)
     target = file['pDVCS']  
@@ -83,8 +89,9 @@ def main(args):
     
     for arrays in target.iterate(branches):
         for branch in branches:
-            # Extract the specific component from each vector in the branch
-            data_dict[branch].extend(arrays[branch].tolist())
+            if branch != 'Ph_eff':
+                # Extract the specific component from each vector in the branch
+                data_dict[branch].extend(arrays[branch].tolist())
 
     indices = []
     for arrays in target.iterate('bestCandidateFlag'):
@@ -111,43 +118,58 @@ def main(args):
     
     #Remove mm2_eg for the training
     branches = branches0
+    original_weights_ph = original['Ph_eff']
+    original_weights_train_ph = original_train['Ph_eff']
+    original_weights_test_ph = original_test['Ph_eff']
+    
     original_weights = numpy.ones(len(original))
     original_weights_train = numpy.ones(len(original_train))
     original_weights_test = numpy.ones(len(original_test))
+    
+    original.drop(['Ph_eff'],axis=1, inplace=True)
+    original_train.drop(['Ph_eff'],axis=1, inplace=True)
+    original_test.drop(['Ph_eff'],axis=1, inplace=True)
+
     
     ####################################
     #Plot some distribution for control
     ####################################
 
+    # Store xlim for consistency
+    xlim_dict = {}
+    for column in branches:
+        xlim_dict[column] = numpy.percentile(numpy.hstack([target[column]]), [0.01, 99.99])
+
     #Original distributions
-    draw_distributions(original, target, original_weights)
+    draw_distributions(original, target, original_weights, xlim_dict)
     plt.savefig('Reweighting_Plots/dists_orig.pdf')
     #Train sample distributions
-    draw_distributions(original_train, target_train, original_weights_train)
+    draw_distributions(original_train, target_train, original_weights_train, xlim_dict)
     plt.savefig('Reweighting_Plots/dists_train.pdf')
     #Test sample distributions
-    draw_distributions(original_test, target_test, original_weights_test)
+    draw_distributions(original_test, target_test, original_weights_test, xlim_dict)
     plt.savefig('Reweighting_Plots/dists_test.pdf')
     
     ####################################
     #Gradient Boosted Reweighter
     ####################################
 
-    reweighter = reweight.GBReweighter(n_estimators=50, learning_rate=0.25, max_depth=5, min_samples_leaf=1000, 
-                                       gb_args={'subsample': 0.4})
-    reweighter.fit(original_train, target_train)    
-    gb_weights_test = reweighter.predict_weights(original_test)
+    reweighter = reweight.GBReweighter(n_estimators=100, learning_rate=0.1, max_depth=5, min_samples_leaf=100, 
+                                       gb_args={'subsample': 0.5})
+    reweighter.fit(original=original, target=target, original_weight=original_weights)    
+    gb_weights = reweighter.predict_weights(original, original_weight=original_weights)
     # validate reweighting rule on the test part comparing 1d projections
-    draw_distributions(original_test, target_test, gb_weights_test)
+    draw_distributions(original, target, gb_weights*original_weights, xlim_dict)
     plt.savefig('Reweighting_Plots/dists_reweighted.pdf')
+    draw_distributions(original, target, gb_weights*original_weights_ph, xlim_dict)
+    plt.savefig('Reweighting_Plots/dists_reweighted_PhEff.pdf')
 
     #Plot mm2_eg
     branches3 = ['mm2_eg']
-    weights_all = numpy.ones(len(original))
-    draw_distributions2(original0, target0, weights_all, branches3)
+    draw_distributions2(original0, target0, original_weights, branches3)
     plt.savefig('Reweighting_Plots/mm2_eg_before.pdf')
-    weights_all = reweighter.predict_weights(original)
-    draw_distributions2(original0, target0, weights_all, branches3)
+    weights_all = reweighter.predict_weights(original, original_weight=original_weights)
+    draw_distributions2(original0, target0, weights_all*original_weights, branches3)
     plt.savefig('Reweighting_Plots/mm2_eg_reweighted.pdf')
     ####################################
     #Create Output
@@ -155,7 +177,7 @@ def main(args):
     print("Creating output...")
 
     # Define the output text file path
-    output_text_file = 'rWeights0.dat'
+    output_text_file = 'rWeights.dat'
     
     # Write the list to the text file
     with open(output_text_file, 'w') as file:
@@ -175,31 +197,36 @@ def main(args):
     print("Folding reweighting...")
     
     # define base reweighter
-    reweighter_base = reweight.GBReweighter(n_estimators=50, 
-                                            learning_rate=0.25, max_depth=5, min_samples_leaf=100, 
-                                            gb_args={'subsample': 0.4})
+    reweighter_base = reweight.GBReweighter(n_estimators=50, learning_rate=0.1, max_depth=3, min_samples_leaf=200, 
+                                            gb_args={'subsample': 0.5})
     reweighter = reweight.FoldingReweighter(reweighter_base, n_folds=3)
     # it is not needed divide data into train/test parts; rewighter can be train on the whole samples
-    reweighter.fit(original, target)
+    reweighter.fit(original=original, target=target, original_weight=original_weights)
     
     # predict method provides unbiased weights prediction for the whole sample
     # folding reweighter contains two reweighters, each is trained on one half of samples
     # during predictions each reweighter predicts another half of samples not used in training
-    folding_weights = reweighter.predict_weights(original)
+    folding_weights = reweighter.predict_weights(original, original_weight=original_weights)
     
     draw_distributions(original, target, folding_weights)
     
     #Plot weighted mm2_eg
-    weights_all = reweighter.predict_weights(original)
-    draw_distributions2(original0, target0, weights_all, branches3) 
+    weights_all = reweighter.predict_weights(original, original_weight=original_weights)
+    draw_distributions2(original0, target0, weights_all*original_weights, branches3) 
     plt.savefig('Reweighting_Plots/mm2_eg_Folding_reweighted.pdf')
+
+    #Plot weighted mm2_eg with Ph_eff
+    weights_all = reweighter.predict_weights(original, original_weight=original_weights)
+    draw_distributions2(original0, target0, weights_all*original_weights_ph, branches3) 
+    plt.savefig('Reweighting_Plots/mm2_eg_Folding_reweighted_PhEff.pdf')
+
     ####################################
     #Create Output
     ####################################
     print("Creating output...")
 
     # Define the output text file path
-    output_text_file = 'rWeights.dat'
+    output_text_file = 'rWeights0.dat'
     
     # Write the list to the text file
     with open(output_text_file, 'w') as file:

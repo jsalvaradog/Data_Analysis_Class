@@ -3,7 +3,7 @@
 void BDT::Add_BDT_var_float_Formula(TCut cutSB, TString Data, TString output)
 {
 
-  cout << "-Start TMVA-" << endl;
+  cout << "\n-Start TMVA-" << endl;
 
   cout << " Adding Variables to Reader" << endl;
   // --- Create the Reader object
@@ -44,18 +44,21 @@ void BDT::Add_BDT_var_float_Formula(TCut cutSB, TString Data, TString output)
 	  reader->BookMVA("BDT method", Folder + TString("dataset/weights/TMVAClassificationCategory_BDT.weights.xml"));
   }
   
-  Long64_t nentries = signal->GetEntries();
+  int nentries = signal->GetEntries();
   cout << "Reading File with " << nentries << " to Add MVA response" << endl;
   cout << " Reading Variables" << endl;
 
-
   //========================================
-  signal->SetBranchStatus("*", 1); // enable all branches  
-  if (signal->GetListOfBranches()->FindObject("_strip_Nuc_BDT")) {
-    signal->SetBranchStatus("_strip_Nuc_BDT", 0);
-  }
+  //signal->SetBranchStatus("*", 1); // enable all branches
   
   TFile f(Folder + output, "RECREATE");
+
+  if(nentries == 0)
+  {
+    signal->Write();
+    f.Close();
+    return;
+  }
 
   TTree *Tree = signal->CopyTree(cutSB);
 
@@ -104,7 +107,7 @@ void BDT::Add_BDT_var_float_Formula(TCut cutSB, TString Data, TString output)
   Tree->Write();
   cout << "closing file" << endl;
 
-  cout << "Added " << Tree->GetEntries() << " MVA variables to file" << endl;
+  cout << "Added " << Tree->GetEntries() << " MVA variables to file\n" << endl;
 
   delete reader;
   delete signal;
