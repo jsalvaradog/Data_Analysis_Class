@@ -188,7 +188,7 @@ void BDT::fill_DVCS_histograms(TLorentzVector*& electron, TLorentzVector*& photo
   Phi_Ph->Fill(Phi);  
 }
 
-TH1* BDT::Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
+TH1* BDT::Get_Contamination_Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
 {
   gStyle->SetOptFit(0);
   gStyle->SetOptTitle(1);
@@ -217,6 +217,10 @@ TH1* BDT::Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
   ch1->SetBranchStatus("strip_El_vy",1);
   ch1->SetBranchStatus("strip_El_vz",1);
   
+  ch1->SetBranchStatus("strip_El_PCAL_energy",1);
+  ch1->SetBranchStatus("strip_El_ECin_energy",1);
+  ch1->SetBranchStatus("strip_El_ECout_energy",1);
+
   ch1->SetBranchStatus("strip_Nuc_px",1);
   ch1->SetBranchStatus("strip_Nuc_py",1);
   ch1->SetBranchStatus("strip_Nuc_pz",1);
@@ -242,6 +246,10 @@ TH1* BDT::Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
   static vector<double> *El_vx;
   static vector<double> *El_vy;
   static vector<double> *El_vz;
+
+  static vector<double> *PCAL_energy;
+  static vector<double> *ECin_energy;
+  static vector<double> *ECout_energy;
 
   static vector<double> *Nuc_px;
   static vector<double> *Nuc_py;
@@ -283,6 +291,10 @@ TH1* BDT::Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
   ch1->SetBranchAddress("strip_El_vx", &El_vx);
   ch1->SetBranchAddress("strip_El_vy", &El_vy);
   ch1->SetBranchAddress("strip_El_vz", &El_vz);
+
+  ch1->SetBranchAddress("strip_El_PCAL_energy", &PCAL_energy);
+  ch1->SetBranchAddress("strip_El_ECin_energy", &ECin_energy);
+  ch1->SetBranchAddress("strip_El_ECout_energy", &ECout_energy);
 
   ch1->SetBranchAddress("strip_Nuc_px", &Nuc_px);
   ch1->SetBranchAddress("strip_Nuc_py", &Nuc_py);
@@ -332,6 +344,9 @@ TH1* BDT::Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
 		  Nuc->SetXYZT(Nuc_px->at(j),Nuc_py->at(j),Nuc_pz->at(j),Nuc_E->at(j));
 		  Vertex->SetXYZ(El_vx->at(j),El_vy->at(j),El_vz->at(j));
 		  strip_El_vz=El_vz->at(j);
+      strip_El_PCAL_energy=PCAL_energy->at(j);
+      strip_El_ECin_energy=ECin_energy->at(j);
+      strip_El_ECout_energy=ECout_energy->at(j);
 
 		  N1gamma=0;
 		  N2gamma=0;
@@ -445,7 +460,7 @@ TH1* BDT::Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
     // Check if the file exists
     std::ifstream fileStream(filename);
     std::ifstream fileStream_r(filename_r);
-    if ((!fileStream.is_open() && !fileStream_r.is_open()) && false)  //I added the false only because the BSA analysis is done
+    if ((!fileStream.is_open() && !fileStream_r.is_open()) && (generate || recast || add_BDT_Max))  //I added the false only because the BSA analysis is done
       {
 	std::cerr << "Error: " << filename << " does not exist." << std::endl;
 	std::cerr << "Please generate all Maxime_Pi0_i.root files before continuing" << std::endl;
@@ -476,7 +491,7 @@ TH1* BDT::Maxime(TCut cut, double BDT_cut, int bin_number, int Nphi)
   if(add_BDT_Max)
     {
       //Add_BDT_var_float_Formula(cut, Maxime_bkg + Form("Maxime_pi0_recast_%i.root",bin_number), TString("TMaxime_pi0.root")); //Used when I do not have to do double BDT training
-      Add_BDT_var_float_Formula(cut, Form("/volatile/clas12/jsalvg/NP_SIDIS_BSA_inb/Analysis/bin_%i/Maxime_pi0_recast_%i.root",bin_number, bin_number), TString("TMaxime_pi0.root"));
+      Add_BDT_var_float_Formula(cut, Form("/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/bin_%i/Maxime_pi0_recast_%i.root",bin_number, bin_number), TString("TMaxime_pi0.root"));
       //gSystem->Exec(TString("rm ") + Folder + TString("Maxime_pi0.root"));
     }
   if(cut_sys_ || pid_sys)

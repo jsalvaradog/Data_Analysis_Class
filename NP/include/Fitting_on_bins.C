@@ -50,7 +50,7 @@ void BDT::Fitting_on_bins(TString Data, int NumEv)//, TCut cut, TString DVCS, TS
 	      Folder = Folder_old + TString("bin_")+Form("%i/",bin_number);
 	      gSystem->Exec(TString("mkdir -p ") + Folder);
 	      //Make fit
-	      gSystem->Exec(TString("(echo .L include/MassFit_sPlotStudy.C && echo MassFit_sPlotStudy l  && echo l.MassFit\\(\\\"") + TString(cut_bin.GetTitle()).ReplaceAll(">","\\>").ReplaceAll("<","\\<").ReplaceAll("&","\\&") + TString( "\\\"\\) ) | root") );
+	      gSystem->Exec(TString("(echo .L include/sPlot/MassFit_sPlotStudy.C && echo MassFit_sPlotStudy l  && echo l.MassFit\\(\\\"") + TString(cut_bin.GetTitle()).ReplaceAll(">","\\>").ReplaceAll("<","\\<").ReplaceAll("&","\\&") + TString( "\\\"\\) ) | root") );
 	      gSystem->Exec(TString("mv MassFit.png ") + Folder);
 	      gSystem->Exec(TString("mv sw_Data.root ") + Folder);
 	      Single_BSA_Fit("Data_NP_Theta_g_5.root", "sw_Data.root", boundaries, 12);

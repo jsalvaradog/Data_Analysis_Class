@@ -184,7 +184,7 @@ void BDT::Training_on_bins(TString Data, int NBinsPhi=0, int bin=0, bool build=t
           Kin_vars(TData, TDVCS, TPi0, cut + cut_bin + cut_ref + TCut("_strip_Nuc_BDT > 0"));
           gSystem->Exec(TString("mv ") + Folder + TString("Kin_Vars.pdf ") + Folder + TString("Kin_Vars_aft_BDT.pdf"));
 */	
-/*
+
       //Add_BDT_var_Formula(cut + cut_bin, BM_Sim, TBM_Sim, Vars);      
     gSystem->Exec(TString("rm -r ") + Folder + TString("Reweighting_Plots_BM"));
 	  Filter(Folder + TBM_Sim, cut + cut_bin + cut_ref + TCut(Form("_strip_Nuc_BDT > %f",BDT_value)), TString("f") + TBM_Sim);
@@ -192,7 +192,7 @@ void BDT::Training_on_bins(TString Data, int NBinsPhi=0, int bin=0, bool build=t
     Resolution_Match(cut + cut_bin + cut_ref, TString("Data_NP_Theta_g_5.root"), TString("f") + TBM_Sim);
     gSystem->Exec(TString("mv ") + Folder + TString("Reweighting_Plots ") + Folder + TString("Reweighting_Plots_BM"));
     gSystem->Exec(TString("rm ") + Folder + TString("f") + TBM_Sim);
-	*/  
+	  
 
     //Refinement cuts
       //To be used at the end
@@ -207,7 +207,7 @@ void BDT::Training_on_bins(TString Data, int NBinsPhi=0, int bin=0, bool build=t
       if(generate || recast)
       {
       	std::cout<<"\n Get Contamination Maxime way"<<endl;
-      	Maxi=Maxime(cut + cut_bin, BDT_value, bin_number,NBinsPhi);
+      	Maxi=Get_Contamination_Maxime(cut + cut_bin, BDT_value, bin_number,NBinsPhi);
       	return;
       }
 
@@ -220,7 +220,7 @@ void BDT::Training_on_bins(TString Data, int NBinsPhi=0, int bin=0, bool build=t
       //boundaries.push_back(1);
 
       std::cout<<"\n Gettting Contamination Maxime way"<<endl;
-      Maxi=Maxime(cut + cut_bin + cut_ref, BDT_value, bin_number,NBinsPhi);
+      Maxi=Get_Contamination_Maxime(cut + cut_bin + cut_ref, BDT_value, bin_number,NBinsPhi);
 
       //std::cout<<"\n Getting Contamination Fitting way..."<<endl;      
       //Fitt=Get_Contamination_Fit(cut + cut_bin, BDT_value,NBinsPhi);

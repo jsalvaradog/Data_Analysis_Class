@@ -1,9 +1,9 @@
 #include <vector>
 
-double BDT::Best_BDT()
+double BDT::Best_BDT(int bin=0)
 {
-
-  TFile *file = TFile::Open(Folder + TString("TMVACC.root"));
+  TString bin_dir = (bin==0) ? TString("") : Form("bin_%i/", bin);
+  TFile *file = TFile::Open(Folder + bin_dir + TString("TMVACC.root"));
   if (!file || file->IsZombie()) {
     std::cerr << "Error opening TMVACC.root" << std::endl;
     return BDT_value;
@@ -57,3 +57,32 @@ double BDT::Best_BDT()
 
   return bestCut;
 }
+
+
+double BDT::get_bdt_event(double strip_Xbj, double strip_Q2, double t_Ph)
+{
+  for (int i = 0; i < 259; ++i)
+  {
+    // Parse the cut string for this bin
+    TString cutStr = Mbins[i].GetTitle();
+
+    // Extract ranges from the cut string
+    double t_min, t_max, Q2_min, Q2_max, xbj_min, xbj_max;
+    int found = sscanf(cutStr.Data(),
+      "bestCandidateFlag==1 && t_Ph>%lf && t_Ph<%lf && strip_Q2>%lf && strip_Q2<%lf && strip_Xbj>%lf   && strip_Xbj<%lf",
+      &t_min, &t_max, &Q2_min, &Q2_max, &xbj_min, &xbj_max);
+
+    if (found == 6)
+    {
+      if (t_Ph > t_min && t_Ph < t_max &&
+        strip_Q2 > Q2_min && strip_Q2 < Q2_max &&
+        strip_Xbj > xbj_min && strip_Xbj < xbj_max)
+      {
+        return bdts.at(i);
+      }
+    }
+  }
+
+  return -1.0; // Not found
+}
+

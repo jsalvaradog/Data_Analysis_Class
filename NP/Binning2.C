@@ -1,200 +1,281 @@
-void BDT::config()
+ #define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+#define PBWIDTH 60
+
+TCut TheCut = TCut("bestCandidateFlag==1 && N_Ph<3 && t_Ph>-1");
+TCut cut_NP=TCut("bestCandidateFlag==1 && mm2_eg>0 && N_Ph<3 && mm2_eg<3 && abs(t_Ph/strip_Q2)<1 && t_Ph>-1"); 
+
+double BDT_cut_P = 0.0;
+double BDT_cut_NP= 0.08;
+double BDT_cut_SIDIS=0.1;
+int NBins=259;
+
+TCut Mbins[259];
+TCut BDT_bin_cut;
+
+std::vector<double> bdts;
+
+double get_bdt_event(double strip_Xbj, double strip_Q2, double t_Ph)
 {
-    Nbins=259;
+  for (int i = 0; i < 259; ++i)
+  {
+    // Parse the cut string for this bin
+    TString cutStr = Mbins[i].GetTitle();
 
-    //Working directory
-    dir="/work/clas12/jsalvg/pass2_RGA-Analysis/inb/xsec/";
-    //External BSA from analysis note -> To compare with a previous analysis
-    extBSA="/work/clas12/jsalvg/pass2_RGA-Analysis/Maxime_BSA/"; 
-    //External xsec from analysis note -> To compare with a previous analysis
-    extXSEC="/work/clas12/jsalvg/pass2_RGA-Analysis/inb/xsec/Theory_xsec/";
-    //Folder to store the results
-    Folder="Analysis/";
-    gSystem->Exec(TString("mkdir -p ") + Folder);
+    // Extract ranges from the cut string
+    double t_min, t_max, Q2_min, Q2_max, xbj_min, xbj_max;
+    int found = sscanf(cutStr.Data(),
+      "bestCandidateFlag==1 && t_Ph>%lf && t_Ph<%lf && strip_Q2>%lf && strip_Q2<%lf && strip_Xbj>%lf   && strip_Xbj<%lf",
+      &t_min, &t_max, &Q2_min, &Q2_max, &xbj_min, &xbj_max);
 
-  TFile *fin = TFile::Open(TString("Photon_Efficiency.root"), "READ");
-  h_ef_FD = (TH2F*)fin->Get("h_ef_FD");
-  h_ef_FT = (TH2F*)fin->Get("h_ef_FT");
-  h_ef_FD_Err = (TH2F*)fin->Get("h_ef_FD_Err");
-  h_ef_FT_Err = (TH2F*)fin->Get("h_ef_FT_Err");
+    if (found == 6)
+    {
+      if (t_Ph > t_min && t_Ph < t_max &&
+        strip_Q2 > Q2_min && strip_Q2 < Q2_max &&
+        strip_Xbj > xbj_min && strip_Xbj < xbj_max)
+      {
+        return bdts.at(i);
+      }
+    }
+  }
 
-    //Compute Q2, t and xB on each phi bin ?
-    means_most=false;
-    means_maxi=false;
-    means_fit=false;
+  return -1.0; // Not found
+}
 
-    //To generate the contamination files.
-    //Only one of these can be set to true.
-    //Thus, you need to run the script 3 times before being able to get any physics results
-    generate=false;	 //Generate pi0 decays
-    recast=false;   	 //Recombine 1-gamma pi0 events into files for each bin
-    add_BDT_Max=false;  //Add BDT variable to the contamination files.
 
-    //Estimate contamination from method 1 ? It is not needed to be computed everytime
-    generate_most=false;
-    generate_fit=false;
 
-    //Get Excl tagged from the P detected case
-    tag=false;
+double Best_BDT(int bin)
+{
 
-    //Compute cross-section?
-    xsection=false;
+  TFile *file = TFile::Open(TString(Form("Analysis/bin_%i/TMVACC.root", bin)));
+  if (!file || file->IsZombie()) {
+    std::cerr << "Error opening TMVACC.root" << std::endl;
+    return BDT_cut_NP;
+  }
 
-    //Data samples for training and experimental data
-    DVCS="/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/Tested_DVCS.root";
-    Pi0 ="/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/Tested_Pi0.root"; //From excl-pi0
-    //Pi0 ="/volatile/clas12/jsalvg/simulation/clasdis/inb/1gamma/Quality_Pi_as_DVCS_NP.root"; //from sidis
-    SIDIS = "/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/Tsidis.root"; //from sidis
-    Data_name="Tested1_Quality_Data.root";
-    Data="/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/" + Data_name; //For technical reasons I needed to split this variable in the NP case
-    TData="Tested_Quality_Data.root";
-    TDVCS="Tested_DVCS.root";
-    TPi0="Tested_Pi0.root";
+  TTree *tree = dynamic_cast<TTree*>(file->Get("dataset/TestTree"));
+  if (!tree) {
+    std::cerr << "Error: TestTree not found in TMVACC.root" << std::endl;
+    file->Close();
+    return BDT_cut_NP;
+  }
 
-    //If you train with exp data. You might need a dvcs_MC sample eventually
-    DVCS_MC=DVCS; //"/work/clas12/jsalvg/RGA-Simulation/pass2_inb/pDVCS_no_rad/Quality_DVCS_NP_Train.root";
-    TDVCS_MC="Tested_DVCS_MC.root";
-    DVCS_nABkg = "/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/TDVCS_nABkg.root";
-    DVCS_noBkg = "/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/TDVCS_noBkg.root";
+  TObjArray* branches = tree->GetListOfBranches();
+  bool hasPhTopologies = branches->FindObject("Ph_Topologies") != nullptr;
+  const char* bdtBranch = hasPhTopologies ? "Ph_Topologies" : "BDT";
 
-    //For eta Background estimation
-    epeta = "/work/clas12/jsalvg/Data/eta/pass2_RGA/inb/Quality_Data_epeta_NP.root";	
-    sim_eta_as_dvcs = "/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/Tested_1gamma_eta.root";
-    sim_epeta="/work/clas12/jsalvg/RGA-Simulation/inb/eta/NP/Quality_Sim_epeta_NP.root";
+  TH1F* hSignal = new TH1F("hSignal", "Signal BDT", 100, -1, 1);
+  TH1F* hBackground = new TH1F("hBackground", "Background BDT", 100, -1, 1);
 
-    //For Pi0 Background subtraction
-    //eppi0_name = "Quality_Data_eppi0_NP.root";	
-    //eppi0 = "/work/clas12/jsalvg/Data/DVMP/pass2_RGA/inb/NP/" + eppi0_name;	
-    eppi0_name = "Quality3_Data_eppi0_NP.root";	
-    eppi0 = "../" + eppi0_name;	
-    maps_path = "../../maps/";
-    //From excl-pi0
-    sim_eppi0="/volatile/clas12/jsalvg/simulation/aaogen/NP/inb/bkg_sub/2gamma/Quality_Sim_eppi0_NP.root";
-    sim_eppi0_1="/volatile/clas12/jsalvg/simulation/aaogen/NP/inb/bkg_sub/2gamma/Quality_Sim_eppi0_NP.root";
-    sim_pi_as_dvcs = "/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/Tested_1gamma.root";
-    sim_pi_as_dvcs_1 = "/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/Tested_1gamma_1.root";
-    //From sidis
-    //sim_eppi0="/volatile/clas12/jsalvg/simulation/clasdis/inb/2gamma/Quality_Sim_eppi0_NP.root";
-    //sim_eppi0_1="/volatile/clas12/jsalvg/simulation/clasdis/inb/2gamma/Quality_Sim_eppi0_NP.root";
-    //sim_pi_as_dvcs = "/volatile/clas12/jsalvg/simulation/clasdis/inb/1gamma/Quality_Pi_as_DVCS_NP.root";
-    //sim_pi_as_dvcs_1 = "/volatile/clas12/jsalvg/simulation/clasdis/inb/1gamma/Quality_Pi_as_DVCS_NP.root";
+  tree->Project("hSignal", bdtBranch, "classID==0");
+  tree->Project("hBackground", bdtBranch, "classID==1");
+  double nsignal = hSignal->Integral();
+  double nbackground = hBackground->Integral();
+  
+  const int nBins = 100;  
+  float minCut = -0.4, maxCut = 0.4;
+  float bestCut = minCut, maxSignificance = 0.0;
 
-    //Acc and BM corrections. Need a dvcs sample with RC effects. 
-    //RC_can be used if it has enough statistics in all bins.
-    BM_Sim=DVCS;
-    //BM_Sim="/volatile/clas12/jsalvg/xsec_NP_SIDIS_BSA_inb/Analysis/Tested_BM_Sim.root";
-    //BM_Sim="/volatile/clas12/jsalvg/genepi_DVCS/Quality_DVCS_Train_NP.root";
-    TBM_Sim="Tested_BM_Sim.root";
-    //The MC version of the BM sample
-    MC_BM_Sim="/volatile/clas12/jsalvg/simulation/dvcsgen/inb/withRC/MCgen/Quality_MC_DVCS_NP.root";
+  for (int i = 0; i < nBins; ++i) {
+    float cut = minCut + i * (maxCut - minCut) / nBins;
+    double S = 0, B = 0;
+    TH1F* hSignalCut = new TH1F("hSignalCut", "Signal BDT Cut", 100, -1, 1);
+    TH1F* hBackgroundCut = new TH1F("hBackgroundCut", "Background BDT Cut", 100, -1, 1);
+    tree->Project("hSignalCut", bdtBranch, Form("classID==0 && %s>%f", bdtBranch, cut));
+    tree->Project("hBackgroundCut", bdtBranch, Form("classID==1 && %s>%f", bdtBranch, cut));
 
-    //Need a dvcs sample with RC effects
-    RC_Sim=BM_Sim; //"/volatile/clas12/jsalvg/simulation/dvcsgen/inb/withRC/Quality_BM_DVCS_NP.root"; 
-    TRC_Sim="Tested_RC_Sim.root";
-    //The MC version of the RC sample
-    MC_RC_Sim=MC_BM_Sim; 	
-    
-    //Direct output from dvcsgen to compute the RC correction factor. It is the same for the proton and no-proton cases
-    MC_DVCS_RC="/work/clas12/jsalvg/RGA-Simulation/dvcsgen_DVCS_gen.root";
-    MC_DVCS_RC_BH="/work/clas12/jsalvg/RGA-Simulation/dvcsgen_BH_gen.root";
+    S = hSignalCut->Integral()*1000/nsignal; //Scale to total events
+    B = hBackgroundCut->Integral()*1000/nbackground; //Scale to total events
 
-    //Directory to temporaly store the contamination files from method 2 
-    //(Only makes sence if I am generating the contamination files)
-    Maxime_bkg = "/volatile/clas12/jsalvg/DVCS_analysis/inb/xsec/";
+    double significance = (S + B > 0) ? S / sqrt(S + B) : 0;
+    if (significance > maxSignificance) {
+      maxSignificance = significance;
+      bestCut = cut;
+    }
+    delete hSignalCut;
+    delete hBackgroundCut;
+  }
 
-    //Used in xsec analysis.
-    cut_kin = TCut("strip_El_P>1.5 && strip_El_Theta>7.5 && strip_El_Theta<37 && strip_Ph_P>2 && strip_Ph_Theta>2 && strip_Ph_Theta<35 && strip_Q2>1.0 && t_Ph>-1.0");
-    cut_sel = TCut("abs(t_Ph/strip_Q2)<1 && theta_gamma_e>5");
+  std::cout << "Best BDT cut: " << bestCut << " with significance: " << maxSignificance << std::endl;
+  file->Close();
 
-    //Basic selection/exclusivity cuts
-    //Not the same as in xsec because I can keep strip_Ph_P>10 and strip_El_P<2 for BSA
-    cut="bestCandidateFlag==1 &&\
-    strip_Xbj <1 && strip_Xbj >0 && t_Ph <0 && strip_Q2 > 1.0 && \
-    strip_W > 2 && strip_El_P > 1.0 && strip_Ph_P>2 && t_Ph>-1 && Phi_Ph<360 && \
-    theta_gamma_e > 5 && abs(t_Ph/strip_Q2)<1 && mm2_eg > 0 && mm2_eg<3 && N_Ph<3";
+  return bestCut;
+}
 
-    cut_ref=TCut("_strip_Nuc_BDT_SIDIS>0.1") + cut_kin;
-    //cut_ref="bestCandidateFlag==1 && t_Ph>-1 && ((strip_Ph_Theta<5 &&strip_Nuc_P<0.8) || strip_Ph_Theta>5) ";
-    //cut_ref=" delta_t>-0.1 && t_Ph>-1";// && t_Ph<-0.17";
 
-    //No systematics due to cuts in the no-proton case
-    //---
+void apply_conf(TH1F*& hist)
+{
+  hist->GetXaxis()->SetTitleSize(0.07);
+  hist->GetYaxis()->SetTitleSize(0.07);
+  hist->GetXaxis()->SetTitleOffset(0.6);
+  hist->GetYaxis()->SetTitleOffset(0.6);
+  hist->GetXaxis()->SetLabelSize(0.05);
+  hist->GetYaxis()->SetLabelSize(0.05);
+  hist->GetXaxis()->SetNdivisions(8);
+  hist->GetYaxis()->SetNdivisions(4);
+}
+ 
+void apply_conf2(TH2F*& hist)
+{
+  hist->GetXaxis()->SetTitleSize(0.07);
+  hist->GetYaxis()->SetTitleSize(0.07);
+  hist->GetXaxis()->SetTitleOffset(0.6);
+  hist->GetYaxis()->SetTitleOffset(0.6);
+  hist->GetXaxis()->SetLabelSize(0.05);
+  hist->GetYaxis()->SetLabelSize(0.05);
+  hist->GetXaxis()->SetNdivisions(8);
+  hist->GetYaxis()->SetNdivisions(8);
+  //hist->Setheta_minimum(0.1);
+  hist->SetMaximum(1e5);
+}
+ 
+void printProgress(double percentage) {
+  int val = (int) (percentage * 100);
+  int lpad = (int) (percentage * PBWIDTH);
+  int rpad = PBWIDTH - lpad;
+  printf("\r%3d%% [%.*s%*s]", val, lpad, PBSTR, rpad, "");
+  fflush(stdout);
+}
 
-    //Cut to estimate systematic error due pid selection    
-    cut_pid="(strip_El_P<4.5 || (strip_El_P>4.5 && strip_El_ECin_energy/strip_El_P > 0.2 - strip_El_PCAL_energy/strip_El_P))";
-   
-    //Training variables
-    Vars.push_back(TString("abs(mm2_eg-0.88)"));
-    Vars.push_back(TString("mm2_e"));
-    Vars.push_back(TString("t_Ph"));
 
-    //Beam polarization
-    Bpol=0.8692; //(dp=2.6)
-    Lumi=(29.35)*1.324*1e6; //31.17*1.324*1e6; //(29.35/1.22)
-    Ieff=47.493;
-    torus="inb"; //magnetic field setting
-    itorus=-1;
-    //BDT cut
-    BDT_value=0.08;
-    //BDT cut for systematic error
-    BDT_value_sys=0.1;
+std::vector<double> Binning_1D(TTree* pDVCS, string ivar, int Nbins) 
+{
+  std::vector<vector<double>> binning_edges;
+  std::vector<double> bins;
+  int counter=0;
+  const UInt_t NBINS = Nbins;
 
-    beam->SetXYZT(0.0, 0.0, 10.6, 10.6);
-    target->SetXYZT(0.0, 0.0, 0.0, 0.938);
+  TString branch;
+  double dist_min, dist_max;
+  if(ivar=="t")
+  {
+    branch="t_Ph";
+    dist_min=-1;
+    dist_max=0;
+  }
+  else if(ivar=="Q")
+  {
+    branch="strip_Q2";
+    dist_min=0;
+    dist_max=13;
+  }
+  else if(ivar=="x")
+  {
+    branch="strip_Xbj";
+    dist_min=0;
+    dist_max=1;
+  }
+  else
+    std::cout<<"1D binning Variable error"<<endl;
 
-    //|t|>|tmin| cut. It is good to have it coded
-    //(t_Ph<-(strip_Q2*0.938 + (strip_Q2/strip_Xbj)*( (strip_Q2/(2*0.938*strip_Xbj)) - sqrt(strip_Q2 + pow((strip_Q2/(2*0.938*strip_Xbj)),2))))/(0.938 + (strip_Q2/(2*0.938*strip_Xbj)) - sqrt(strip_Q2 + pow((strip_Q2/(2*0.938*strip_Xbj)),2))))
+  //Configuration
+  const UInt_t DATADIM = 1;
+  double MinEdges[NBINS];
+  double MaxEdges[NBINS];
 
-    //(t_Ph<-(strip_Q2*0.938 + (strip_Q2/strip_Xbj)*( (strip_Q2/(2*0.938*strip_Xbj)) + sqrt(strip_Q2 + pow((strip_Q2/(2*0.938*strip_Xbj)),2))))/(0.938 + (strip_Q2/(2*0.938*strip_Xbj)) + sqrt(strip_Q2 + pow((strip_Q2/(2*0.938*strip_Xbj)),2))))
+  //Check if binning in t exist. If not, create it
 
-    runCut = 
-"(RunNumber==11) || \
-(RunNumber==5036) || \
-(RunNumber>=5038 && RunNumber<=5041) || \
-(RunNumber==5043) || \
-(RunNumber==5045) || \
-(RunNumber>=5052 && RunNumber<=5053) || \
-(RunNumber==5120) || \
-(RunNumber>=5124 && RunNumber<=5126) || \
-(RunNumber==5139) || \
-(RunNumber==5153) || \
-(RunNumber==5158) || \
-(RunNumber>=5162 && RunNumber<=5164) || \
-(RunNumber==5181) || \
-(RunNumber==5191) || \
-(RunNumber==5193) || \
-(RunNumber>=5195 && RunNumber<=5206) || \
-(RunNumber==5208) || \
-(RunNumber>=5211 && RunNumber<=5212) || \
-RunNumber<=5216 || \
-(RunNumber>=5219 && RunNumber<=5223) || \
-(RunNumber>=5230 && RunNumber<=5235) || \
-(RunNumber>=5237 && RunNumber<=5238) || \
-(RunNumber>=5247 && RunNumber<=5249) || \
-(RunNumber>=5252 && RunNumber<=5253) || \
-(RunNumber>=5257 && RunNumber<=5259) || \
-(RunNumber>=5261 && RunNumber<=5262) || \
-(RunNumber>=5303 && RunNumber<=5307) || \
-(RunNumber>=5310 && RunNumber<=5311) || \
-(RunNumber==5315) || \
-(RunNumber>=5317 && RunNumber<=5320) || \
-(RunNumber>=5323 && RunNumber<=5324) || \
-(RunNumber>=5333 && RunNumber<=5335) || \
-(RunNumber>=5339 && RunNumber<=5347) || \
-(RunNumber==5349) || \
-(RunNumber==5351) || \
-(RunNumber>=5354 && RunNumber<=5355) || \
-(RunNumber>=5356 && RunNumber<=5362) || \
-(RunNumber>=5366 && RunNumber<=5369) || \
-(RunNumber>=5372 && RunNumber<=5376) || \
-(RunNumber>=5378 && RunNumber<=5383) || \
-(RunNumber==5386) || \
-(RunNumber>=5391 && RunNumber<=5393) || \
-(RunNumber==5398) || \
-(RunNumber==5401) || \
-(RunNumber>=5406 && RunNumber<=5407)";
+  std::ifstream filet(Form("Binning_%s.dat",ivar.c_str()));
+  if (filet) 
+  {
+    std::cout<<Form("Binning in %s found!",ivar.c_str())<<std::endl;
+    double value1, value2;
+    int k=0;
+    while (filet >> value1 >> value2) 
+      {
+        MinEdges[k]=value1;
+        MaxEdges[k]=value2;
+        bins.push_back(value1);
+        k++;      
+      }
+    bins.push_back(value2);
+    filet.close();
+  }
+  else
+  {
+    std::cout<<Form("Creating binning in %s",ivar.c_str())<<std::endl;
+    // -----------------------------------------------------------------------------------------------
+    //Load data
+    // -----------------------------------------------------------------------------------------------
 
-cut = cut + runCut;
+    static std::vector<int>* flag;
+    static std::vector<double>* var;
+    static std::vector<double> var_vec;
+    int entries=pDVCS->GetEntries();
+    var_vec.clear();
+    var_vec.reserve(entries);
+    pDVCS->ResetBranchAddresses();
+    pDVCS->SetBranchAddress(branch,&var);
+    pDVCS->SetBranchAddress("bestCandidateFlag",&flag);
+  
+    for(int i=0; i<entries;i++)
+      {
+        printProgress(i*1.0/pDVCS->GetEntries());
+        pDVCS->GetEntry(i);
+	      for(int j=0; j<flag->size();j++)
+	        {
+            if(flag->at(j)==1)
+    	        var_vec.push_back(var->at(j));
+	        }   
+      }
+    // -----------------------------------------------------------------------------------------------
+    //Construct binning 1D
+    // -----------------------------------------------------------------------------------------------
+
+    const UInt_t DATASZ = var_vec.size();
+    std::cout<<var_vec.at(0)<<std::endl;
+    TKDTreeBinning* kdBins = new TKDTreeBinning(DATASZ, DATADIM, var_vec, NBINS);
+    const Double_t* binsMinEdges = kdBins->GetBinsMinEdges();
+    const Double_t* binsMaxEdges = kdBins->GetBinsMaxEdges();
+
+    // Convert to a simple double array and sort
+    for (int i = 0; i < NBINS; i++) 
+      {
+        MinEdges[i] = binsMinEdges[i];  // Dereference each pointer
+        MaxEdges[i] = binsMaxEdges[i];
+      }
+
+    std::sort(MinEdges, MinEdges + NBINS);
+    std::sort(MaxEdges, MaxEdges + NBINS); 
+
+    std::ofstream outFile(Form("Binning_%s.dat",ivar.c_str()));
+    for (UInt_t i = 0; i < NBINS; ++i)
+      {
+        std::cout<<"\nBin boundaries: "<<i+1<<" "<<MinEdges[i]<<" "<<MaxEdges[i]<<endl;
+        outFile<<MinEdges[i]<<" "<<MaxEdges[i]<<endl;
+        bins.push_back(MinEdges[i]);
+      }  
+      bins.push_back(MaxEdges[NBINS-1]);
+      outFile.close();
+  }
+
+  //plot
+  TH1F *dist = new TH1F("dist", "dist", 100,dist_min,dist_max);
+  pDVCS->Project("dist", branch, TheCut);
+  
+  dist->SetTitle(Form("%s distribution; %s (GeV^{2}); counts",ivar.c_str(),ivar.c_str()));
+  apply_conf(dist);
+  
+  TCanvas* c1 = new TCanvas("c1", "TH2Poly from a kdTree",1000,700);
+  //gPad->SetLogx();
+  dist->Draw("hist");
+
+  TLine* line[NBINS];
+  for (UInt_t i = 0; i < NBINS; ++i)
+  {
+    line[i] = new TLine(MinEdges[i],0,MinEdges[i],dist->GetMaximum());
+    line[i]->SetLineColor(kRed);
+    //std::cout<< MinEdges[i] <<endl;
+    line[i]->Draw("same");
+  }
+  c1->Print(Form("Bins_%s.pdf",ivar.c_str()));
+  delete c1;
+  delete dist;
+
+  return bins;  
+}
+
+void Binning2() 
+{
 
 Mbins[0]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[1]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
@@ -204,14 +285,14 @@ Mbins[4]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && stri
 Mbins[5]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[6]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[7]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
-Mbins[8]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[8]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 
 Mbins[9]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[10]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[11]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[12]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[13]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
-Mbins[14]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[14]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
 Mbins[15]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[16]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
@@ -221,7 +302,7 @@ Mbins[19]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[20]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[21]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[22]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
-Mbins[23]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[23]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 
 Mbins[24]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[25]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
@@ -231,7 +312,7 @@ Mbins[28]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[29]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[30]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[31]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
-Mbins[32]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[32]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
 Mbins[33]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[34]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
@@ -241,7 +322,7 @@ Mbins[37]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[38]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[39]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[40]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
-Mbins[41]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[41]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 
 Mbins[42]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[43]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
@@ -251,7 +332,7 @@ Mbins[46]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[47]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[48]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[49]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
-Mbins[50]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[50]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 
 Mbins[51]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[52]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
@@ -261,7 +342,7 @@ Mbins[55]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[56]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[57]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 Mbins[58]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
-Mbins[59]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[59]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 
 Mbins[60]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[61]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
@@ -271,7 +352,7 @@ Mbins[64]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[65]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[66]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[67]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
-Mbins[68]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[68]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
 Mbins[69]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[70]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
@@ -281,7 +362,7 @@ Mbins[73]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[74]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[75]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[76]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
-Mbins[77]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[77]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 
 Mbins[78]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[79]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
@@ -291,7 +372,7 @@ Mbins[82]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && str
 Mbins[83]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[84]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[85]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
-Mbins[86]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[86]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 
 Mbins[87]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
 Mbins[88]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
@@ -318,7 +399,7 @@ Mbins[106]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && st
 Mbins[107]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[108]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 Mbins[109]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
-Mbins[110]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[110]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
 Mbins[111]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[112]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
@@ -328,7 +409,7 @@ Mbins[115]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && st
 Mbins[116]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[117]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[118]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
-Mbins[119]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[119]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 
 Mbins[120]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[121]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
@@ -338,7 +419,7 @@ Mbins[124]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && st
 Mbins[125]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[126]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[127]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
-Mbins[128]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[128]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 
 Mbins[129]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
 Mbins[130]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
@@ -371,7 +452,7 @@ Mbins[153]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && st
 Mbins[154]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[155]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 Mbins[156]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
-Mbins[157]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[157]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 
 Mbins[158]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[159]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
@@ -381,7 +462,7 @@ Mbins[162]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && st
 Mbins[163]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[164]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 Mbins[165]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
-Mbins[166]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<-0.005000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[166]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 
 Mbins[167]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
 Mbins[168]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
@@ -489,299 +570,165 @@ Mbins[255]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && st
 Mbins[256]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
 Mbins[257]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
 Mbins[258]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
-      
-        bins ={{
-{-1.000000, -0.800000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.800000, -0.600000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.600000, -0.400000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.400000, -0.250000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.250000, -0.150000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.150000, -0.110000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.110000, -0.070000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.070000, -0.040000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.040000, -0.005000, 1.000000, 1.200000, 0.062000, 0.090000},
-{-0.400000, -0.250000, 1.000000, 1.200000, 0.090000, 0.118000},
-{-0.250000, -0.150000, 1.000000, 1.200000, 0.090000, 0.118000},
-{-0.150000, -0.110000, 1.000000, 1.200000, 0.090000, 0.118000},
-{-0.110000, -0.070000, 1.000000, 1.200000, 0.090000, 0.118000},
-{-0.070000, -0.040000, 1.000000, 1.200000, 0.090000, 0.118000},
-{-0.040000, -0.005000, 1.000000, 1.200000, 0.090000, 0.118000},
-{-1.000000, -0.800000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.800000, -0.600000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.600000, -0.400000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.400000, -0.250000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.250000, -0.150000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.150000, -0.110000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.110000, -0.070000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.070000, -0.040000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-0.040000, -0.005000, 1.200000, 1.456000, 0.062000, 0.090000},
-{-1.000000, -0.800000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.800000, -0.600000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.600000, -0.400000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.400000, -0.250000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.250000, -0.150000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.150000, -0.110000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.110000, -0.070000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.070000, -0.040000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-0.040000, -0.005000, 1.200000, 1.456000, 0.090000, 0.118000},
-{-1.000000, -0.800000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.800000, -0.600000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.600000, -0.400000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.400000, -0.250000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.250000, -0.150000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.150000, -0.110000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.110000, -0.070000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.070000, -0.040000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-0.040000, -0.005000, 1.200000, 1.456000, 0.118000, 0.155000},
-{-1.000000, -0.800000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.800000, -0.600000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.600000, -0.400000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.400000, -0.250000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.250000, -0.150000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.150000, -0.110000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.110000, -0.070000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.070000, -0.040000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-0.040000, -0.005000, 1.200000, 1.456000, 0.155000, 0.204000},
-{-1.000000, -0.800000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.800000, -0.600000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.600000, -0.400000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.400000, -0.250000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.250000, -0.150000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.150000, -0.110000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.110000, -0.070000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.070000, -0.040000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-0.040000, -0.005000, 1.456000, 1.912000, 0.062000, 0.090000},
-{-1.000000, -0.800000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.800000, -0.600000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.600000, -0.400000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.400000, -0.250000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.250000, -0.150000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.150000, -0.110000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.110000, -0.070000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.070000, -0.040000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-0.040000, -0.005000, 1.456000, 1.912000, 0.090000, 0.118000},
-{-1.000000, -0.800000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.800000, -0.600000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.600000, -0.400000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.400000, -0.250000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.250000, -0.150000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.150000, -0.110000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.110000, -0.070000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.070000, -0.040000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-0.040000, -0.005000, 1.456000, 1.912000, 0.118000, 0.155000},
-{-1.000000, -0.800000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.800000, -0.600000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.600000, -0.400000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.400000, -0.250000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.250000, -0.150000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.150000, -0.110000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.110000, -0.070000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.070000, -0.040000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-0.040000, -0.005000, 1.456000, 1.912000, 0.155000, 0.204000},
-{-1.000000, -0.800000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-0.800000, -0.600000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-0.600000, -0.400000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-0.400000, -0.250000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-0.250000, -0.150000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-0.150000, -0.110000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-0.110000, -0.070000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-0.070000, -0.040000, 1.456000, 1.912000, 0.204000, 0.268000},
-{-1.000000, -0.800000, 1.456000, 1.912000, 0.268000, 0.357000},
-{-0.800000, -0.600000, 1.456000, 1.912000, 0.268000, 0.357000},
-{-0.600000, -0.400000, 1.456000, 1.912000, 0.268000, 0.357000},
-{-0.400000, -0.250000, 1.456000, 1.912000, 0.268000, 0.357000},
-{-0.250000, -0.150000, 1.456000, 1.912000, 0.268000, 0.357000},
-{-0.150000, -0.110000, 1.456000, 1.912000, 0.268000, 0.357000},
-{-0.110000, -0.070000, 1.456000, 1.912000, 0.268000, 0.357000},
-{-1.000000, -0.800000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.800000, -0.600000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.600000, -0.400000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.400000, -0.250000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.250000, -0.150000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.150000, -0.110000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.110000, -0.070000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.070000, -0.040000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-0.040000, -0.005000, 1.912000, 2.510000, 0.090000, 0.118000},
-{-1.000000, -0.800000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.800000, -0.600000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.600000, -0.400000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.400000, -0.250000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.250000, -0.150000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.150000, -0.110000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.110000, -0.070000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.070000, -0.040000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-0.040000, -0.005000, 1.912000, 2.510000, 0.118000, 0.155000},
-{-1.000000, -0.800000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.800000, -0.600000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.600000, -0.400000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.400000, -0.250000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.250000, -0.150000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.150000, -0.110000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.110000, -0.070000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.070000, -0.040000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-0.040000, -0.005000, 1.912000, 2.510000, 0.155000, 0.204000},
-{-1.000000, -0.800000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-0.800000, -0.600000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-0.600000, -0.400000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-0.400000, -0.250000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-0.250000, -0.150000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-0.150000, -0.110000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-0.110000, -0.070000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-0.070000, -0.040000, 1.912000, 2.510000, 0.204000, 0.268000},
-{-1.000000, -0.800000, 1.912000, 2.510000, 0.268000, 0.357000},
-{-0.800000, -0.600000, 1.912000, 2.510000, 0.268000, 0.357000},
-{-0.600000, -0.400000, 1.912000, 2.510000, 0.268000, 0.357000},
-{-0.400000, -0.250000, 1.912000, 2.510000, 0.268000, 0.357000},
-{-0.250000, -0.150000, 1.912000, 2.510000, 0.268000, 0.357000},
-{-0.150000, -0.110000, 1.912000, 2.510000, 0.268000, 0.357000},
-{-0.110000, -0.070000, 1.912000, 2.510000, 0.268000, 0.357000},
-{-1.000000, -0.800000, 1.912000, 2.510000, 0.357000, 0.446000},
-{-0.800000, -0.600000, 1.912000, 2.510000, 0.357000, 0.446000},
-{-0.600000, -0.400000, 1.912000, 2.510000, 0.357000, 0.446000},
-{-0.400000, -0.250000, 1.912000, 2.510000, 0.357000, 0.446000},
-{-0.250000, -0.150000, 1.912000, 2.510000, 0.357000, 0.446000},
-{-1.000000, -0.800000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.800000, -0.600000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.600000, -0.400000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.400000, -0.250000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.250000, -0.150000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.150000, -0.110000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.110000, -0.070000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.070000, -0.040000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-0.040000, -0.005000, 2.510000, 3.295000, 0.118000, 0.155000},
-{-1.000000, -0.800000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.800000, -0.600000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.600000, -0.400000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.400000, -0.250000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.250000, -0.150000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.150000, -0.110000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.110000, -0.070000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.070000, -0.040000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-0.040000, -0.005000, 2.510000, 3.295000, 0.155000, 0.204000},
-{-1.000000, -0.800000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-0.800000, -0.600000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-0.600000, -0.400000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-0.400000, -0.250000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-0.250000, -0.150000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-0.150000, -0.110000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-0.110000, -0.070000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-0.070000, -0.040000, 2.510000, 3.295000, 0.204000, 0.268000},
-{-1.000000, -0.800000, 2.510000, 3.295000, 0.268000, 0.357000},
-{-0.800000, -0.600000, 2.510000, 3.295000, 0.268000, 0.357000},
-{-0.600000, -0.400000, 2.510000, 3.295000, 0.268000, 0.357000},
-{-0.400000, -0.250000, 2.510000, 3.295000, 0.268000, 0.357000},
-{-0.250000, -0.150000, 2.510000, 3.295000, 0.268000, 0.357000},
-{-0.150000, -0.110000, 2.510000, 3.295000, 0.268000, 0.357000},
-{-0.110000, -0.070000, 2.510000, 3.295000, 0.268000, 0.357000},
-{-1.000000, -0.800000, 2.510000, 3.295000, 0.357000, 0.446000},
-{-0.800000, -0.600000, 2.510000, 3.295000, 0.357000, 0.446000},
-{-0.600000, -0.400000, 2.510000, 3.295000, 0.357000, 0.446000},
-{-0.400000, -0.250000, 2.510000, 3.295000, 0.357000, 0.446000},
-{-0.250000, -0.150000, 2.510000, 3.295000, 0.357000, 0.446000},
-{-0.800000, -0.600000, 2.510000, 3.295000, 0.446000, 0.581000},
-{-0.600000, -0.400000, 2.510000, 3.295000, 0.446000, 0.581000},
-{-0.400000, -0.250000, 2.510000, 3.295000, 0.446000, 0.581000},
-{-1.000000, -0.800000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-0.800000, -0.600000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-0.600000, -0.400000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-0.400000, -0.250000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-0.250000, -0.150000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-0.150000, -0.110000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-0.110000, -0.070000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-0.070000, -0.040000, 3.295000, 4.326000, 0.155000, 0.204000},
-{-1.000000, -0.800000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-0.800000, -0.600000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-0.600000, -0.400000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-0.400000, -0.250000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-0.250000, -0.150000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-0.150000, -0.110000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-0.110000, -0.070000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-0.070000, -0.040000, 3.295000, 4.326000, 0.204000, 0.268000},
-{-1.000000, -0.800000, 3.295000, 4.326000, 0.268000, 0.357000},
-{-0.800000, -0.600000, 3.295000, 4.326000, 0.268000, 0.357000},
-{-0.600000, -0.400000, 3.295000, 4.326000, 0.268000, 0.357000},
-{-0.400000, -0.250000, 3.295000, 4.326000, 0.268000, 0.357000},
-{-0.250000, -0.150000, 3.295000, 4.326000, 0.268000, 0.357000},
-{-0.150000, -0.110000, 3.295000, 4.326000, 0.268000, 0.357000},
-{-0.110000, -0.070000, 3.295000, 4.326000, 0.268000, 0.357000},
-{-1.000000, -0.800000, 3.295000, 4.326000, 0.357000, 0.446000},
-{-0.800000, -0.600000, 3.295000, 4.326000, 0.357000, 0.446000},
-{-0.600000, -0.400000, 3.295000, 4.326000, 0.357000, 0.446000},
-{-0.400000, -0.250000, 3.295000, 4.326000, 0.357000, 0.446000},
-{-0.250000, -0.150000, 3.295000, 4.326000, 0.357000, 0.446000},
-{-1.000000, -0.800000, 3.295000, 4.326000, 0.446000, 0.581000},
-{-0.800000, -0.600000, 3.295000, 4.326000, 0.446000, 0.581000},
-{-0.600000, -0.400000, 3.295000, 4.326000, 0.446000, 0.581000},
-{-0.400000, -0.250000, 3.295000, 4.326000, 0.446000, 0.581000},
-{-1.000000, -0.800000, 4.326000, 5.761000, 0.204000, 0.268000},
-{-0.800000, -0.600000, 4.326000, 5.761000, 0.204000, 0.268000},
-{-0.600000, -0.400000, 4.326000, 5.761000, 0.204000, 0.268000},
-{-0.400000, -0.250000, 4.326000, 5.761000, 0.204000, 0.268000},
-{-0.250000, -0.150000, 4.326000, 5.761000, 0.204000, 0.268000},
-{-0.150000, -0.110000, 4.326000, 5.761000, 0.204000, 0.268000},
-{-0.110000, -0.070000, 4.326000, 5.761000, 0.204000, 0.268000},
-{-1.000000, -0.800000, 4.326000, 5.761000, 0.268000, 0.357000},
-{-0.800000, -0.600000, 4.326000, 5.761000, 0.268000, 0.357000},
-{-0.600000, -0.400000, 4.326000, 5.761000, 0.268000, 0.357000},
-{-0.400000, -0.250000, 4.326000, 5.761000, 0.268000, 0.357000},
-{-0.250000, -0.150000, 4.326000, 5.761000, 0.268000, 0.357000},
-{-0.150000, -0.110000, 4.326000, 5.761000, 0.268000, 0.357000},
-{-0.110000, -0.070000, 4.326000, 5.761000, 0.268000, 0.357000},
-{-1.000000, -0.800000, 4.326000, 5.761000, 0.357000, 0.446000},
-{-0.800000, -0.600000, 4.326000, 5.761000, 0.357000, 0.446000},
-{-0.600000, -0.400000, 4.326000, 5.761000, 0.357000, 0.446000},
-{-0.400000, -0.250000, 4.326000, 5.761000, 0.357000, 0.446000},
-{-0.250000, -0.150000, 4.326000, 5.761000, 0.357000, 0.446000},
-{-1.000000, -0.800000, 4.326000, 5.761000, 0.446000, 0.581000},
-{-0.800000, -0.600000, 4.326000, 5.761000, 0.446000, 0.581000},
-{-0.600000, -0.400000, 4.326000, 5.761000, 0.446000, 0.581000},
-{-0.400000, -0.250000, 4.326000, 5.761000, 0.446000, 0.581000},
-{-1.000000, -0.800000, 5.761000, 7.000000, 0.268000, 0.357000},
-{-0.800000, -0.600000, 5.761000, 7.000000, 0.268000, 0.357000},
-{-0.600000, -0.400000, 5.761000, 7.000000, 0.268000, 0.357000},
-{-0.400000, -0.250000, 5.761000, 7.000000, 0.268000, 0.357000},
-{-0.250000, -0.150000, 5.761000, 7.000000, 0.268000, 0.357000},
-{-1.000000, -0.800000, 5.761000, 7.000000, 0.357000, 0.446000},
-{-0.800000, -0.600000, 5.761000, 7.000000, 0.357000, 0.446000},
-{-0.600000, -0.400000, 5.761000, 7.000000, 0.357000, 0.446000},
-{-0.400000, -0.250000, 5.761000, 7.000000, 0.357000, 0.446000},
-{-0.250000, -0.150000, 5.761000, 7.000000, 0.357000, 0.446000},
-{-1.000000, -0.800000, 5.761000, 7.000000, 0.446000, 0.581000},
-{-0.800000, -0.600000, 5.761000, 7.000000, 0.446000, 0.581000},
-{-0.600000, -0.400000, 5.761000, 7.000000, 0.446000, 0.581000},
-{-0.400000, -0.250000, 5.761000, 7.000000, 0.446000, 0.581000}
-          }};  
 
 
-      Nphibins.fill(24);  
-      bdts.fill(BDT_value);  
-
-  if (itorus == -1)
-    bdts = {0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.22, 0.196, 0.188, 0.196, 0.172, 0.236, 0.212, 0.1, 0.1, 0.156, 0.124, 0.124,
-            0.14, 0.156, 0.22, 0.204, 0.228, 0.268, 0.132, 0.148, 0.092, 0.1, 0.156, 0.172, 0.14, 0.18, 0.26, -0.00399999, 0.012, 0.108, -0.236, 0.116, 0.06, 0.052, 0.244, -0.38, 0.332, 0.3,
-            0.252, 0.244, 0.244, 0.1, 0.1, 0.1, 0.1, 0.1, 0.084, 0.076, 0.068, 0.084, 0.116, 0.124, 0.124, 0.14, 0.06, 0.036, 0.052, 0.044, 0.068, 0.108, 0.092, 0.092, 0.124, 0.012, 0.012,
-            0.004, 0.02, 0.004, 0.012, 0.012, 0.036, 0.084, -0.02, -0.036, -0.036, -0.044, -0.02, -0.012, -0.012, -0.02, -0.092, -0.092, -0.06, -0.044, -0.044, -0.068, -0.084, 0.3, 0.268,
-            0.236, 0.244, 0.252, 0.1, 0.1, 0.1, 0.1, 0.092, 0.06, 0.068, 0.068, 0.076, 0.116, 0.116, 0.116, 0.14, 0.02, 0.012, 0.02, 0.028, 0.036, 0.052, 0.044, 0.068, 0.14, -0.028, -0.00399999,
-            -0.012, -0.012, -0.012, -0.00399999, -0.00399999, 0.028, -0.036, -0.06, -0.036, -0.028, -0.036, -0.036, -0.044, -0.1, -0.084, -0.076, -0.068, -0.044, 0.284, 0.284, 0.22, 0.236, 0.236,
-            0.332, 0.1, 0.1, 0.1, 0.06, 0.06, 0.044, 0.052, 0.076, 0.108, 0.108, 0.132, 0.252, 0.02, 0.004, 0.004, 0.02, 0.02, 0.036, 0.028, 0.084, -0.044, -0.036, -0.02, -0.02, -0.02, -0.00399999,
-            0.044, -0.052, -0.068, -0.036, -0.044, -0.036, -0.14, -0.084, -0.1, 0.244, 0.108, 0.196, 0.212, 0.252, 0.348, 0.308, 0.1, 0.044, 0.052, 0.044, 0.052, 0.06, 0.124, 0.124, 0.276,
-            -0.00399999, -0.012, -0.012, 0.004, -0.00399999, 0.044, 0.116, -0.084, -0.06, -0.044, -0.044, -0.028, -0.1, -0.06, -0.084, -0.068, 0.148, 0.228, 0.236, 0.244, 0.244, 0.372, 0.324,
-            0.036, 0.028, 0.036, 0.052, 0.076, 0.18, 0.292, -0.052, -0.044, -0.028, -0.00399999, 0.036, -0.068, -0.06, -0.036, -0.028, -0.38, -0.38, 0.316, 0.364, 0.1, -0.02, 0.028, 0.036,
-            0.044, 0.22, -0.06, -0.068, -0.044, -0.028};
-  else
-    bdts = {0.068, 0.052, 0.06, 0.052, 0.052, 0.06, 0.076, 0.092, 0.076, 0.012, 0.02, 0.06, 0.052, 0.068, 0.06, 0.108, 0.108, 0.092, 0.084, 0.076, 0.108, 0.1, 0.132, 0.108,
-            0.052, 0.044, 0.036, 0.028, 0.036, 0.076, 0.068, 0.084, 0.108, 0.02, 0.012, -0.00399999, -0.00399999, -0.00399999, 0.028, 0.02, 0.02, 0.036, -0.012, -0.012, -0.02, -0.028, -0.012, 0.004,
-            -0.012, 0.012, 0.02, 0.292, 0.244, 0.228, 0.244, 0.228, 0.1, 0.1, 0.1, 0.1, 0.084, 0.068, 0.052, 0.06, 0.068, 0.108, 0.1, 0.1, 0.108, 0.036, 0.028, 0.02, 0.02, 0.036, 0.076, 0.044, 0.068,
-            0.1, -0.00399999, -0.00399999, -0.012, 0.004, -0.012, -0.00399999, 0.004, 0.012, 0.052, -0.028, -0.028, -0.028, -0.028, -0.02, -0.02, -0.012, 0.004, -0.068, -0.068, -0.044, -0.052, -0.044,
-            -0.036, -0.044, 0.268, 0.308, 0.268, 0.228, 0.252, 0.292, 0.1, 0.1, 0.1, 0.076, 0.06, 0.052, 0.052, 0.068, 0.116, 0.108, 0.132, 0.14, 0.028, 0.012, 0.004, 0.036, 0.02, 0.044, 0.044, 0.044,
-            0.14, -0.028, -0.012, -0.02, -0.02, -0.00399999, -0.012, 0.012, 0.036, -0.044, -0.044, -0.036, -0.036, -0.02, -0.02, -0.012, -0.092, -0.084, -0.068, -0.036, -0.052, 0.14, 0.268, 0.324, 0.284,
-            0.316, 0.404, 0.1, 0.1, 0.1, 0.044, 0.068, 0.044, 0.06, 0.084, 0.132, 0.132, 0.164, 0.308, 0.012, 0.004, 0.02, 0.012, 0.028, 0.028, 0.052, 0.124, -0.044, -0.052, -0.028, -0.02, -0.00399999,
-            -0.012, -0.00399999, -0.084, -0.06, -0.052, -0.044, -0.044, -0.108, -0.068, -0.076, -0.38, -0.38, 0.284, 0.348, 0.332, -0.38, 0.1, 0.1, 0.036, 0.044, 0.044, 0.068, 0.068, 0.116, 0.116,
-            0.332, -0.012, 0.004, -0.02, -0.012, 0.004, 0.036, 0.084, -0.06, -0.06, -0.044, -0.028, -0.028, -0.084, -0.068, -0.076, -0.068, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.036, 0.036, 0.036,
-            0.044, 0.044, 0.18, 0.1, -0.076, -0.044, -0.028, -0.012, 0.012, -0.076, -0.06, -0.06, -0.06, 0.1, 0.1, 0.1, 0.1, 0.1, -0.00399999, -0.02, 0.012, 0.068, 0.244, -0.084, -0.028, -0.012, 0.004};
-
-  gBDT = this;
-  std::cout<<"Configuration loaded !"<<endl;		      
-		      
+for(int i=1; i<=259; i++)
+{
+  bdts.push_back(Best_BDT(i));
 }
 
+  gStyle->SetOptStat(0);
+  TChain *pDVCS= new TChain("pDVCS");
+  pDVCS->Add("Analysis/Merged_Data.root");
+  
+  
+  // -----------------------------------------------------------------------------------------------
+  //  Check data existence
+  // -----------------------------------------------------------------------------------------------
+
+  const int NBINSt=9;
+  const int NBINSQ=8;
+  const int NBINSx=9;
+
+  std::vector<double> bins_t = Binning_1D(pDVCS, "t",NBINSt);
+  std::vector<double> bins_Q = Binning_1D(pDVCS, "Q",NBINSQ);
+  std::vector<double> bins_x = Binning_1D(pDVCS, "x",NBINSx);
+
+  std::cout<<bins_t.size()-1<<" "<<bins_x.size()-1<<" "<<bins_Q.size()-1<<endl;
+
+  // ---------------------------------------------------------------------------------------------
+  // Create phase space plots
+  // -----------------------------------------------------------------------------------------------
+
+  for(int l=0; l<NBINSt; l++)
+  {
+  TLine* line_Q[NBINSQ];
+  TLine* line_xQ[NBINSx];
+
+  TH2F *Q2xB = new TH2F("Q2xB", "Q2xB", 100,0,0.65,100,0,8);
+  pDVCS->Project("Q2xB", "strip_Q2:strip_Xbj", cut_NP + TCut(Form("abs(t_Ph/strip_Q2)<1 && N_Ph<3 && _strip_Nuc_BDT_SIDIS > %f", BDT_cut_SIDIS)) + TCut("_strip_Nuc_BDT>get_bdt_event(strip_Xbj, strip_Q2, t_Ph) + 0.02") + TCut(Form("t_Ph>%f && t_Ph<%f",bins_t.at(l),bins_t.at(l+1))));
+  Q2xB->SetTitle("; xB; Q^{2} (GeV^{2})");
+  apply_conf2(Q2xB);
+
+  std::cout<<Form("t_Ph>%f && t_Ph<%f",bins_t.at(l),bins_t.at(l+1))<<endl;
+  TCanvas* c2 = new TCanvas("c2", "c2",1000,700);
+  gPad->SetLogz();
+
+
+  Q2xB->Draw("COLZ");
+  TF1* fa1[4];
+  TLatex *th_edge[2];
+  gPad->SetLogz();
+  double xmax;
+  double Q2inter;
+  double theta;
+
+  theta=37*TMath::Pi()/180;
+  xmax=(378.92 * sin(theta/2)*sin(theta/2))/(227.84 - 224.72*cos(theta));
+  fa1[0] = new TF1("fa1","4*0.938*10.6*10.6*x*sin([0]/2)*sin([0]/2)/(0.938*x + 2*10.6*sin([0]/2)*sin([0]/2))",0,xmax);
+  fa1[0]->SetParameter(0,theta);
+  fa1[0]->SetLineColor(kBlack);
+  fa1[0]->SetLineWidth(2);
+  fa1[0]->Draw("same");
+
+  Q2inter= fa1[0]->Eval(xmax);
+
+  fa1[2] = new TF1("fa1","4*0.938*10.6*10.6*x*sin([0]/2)*sin([0]/2)/(0.938*x + 2*10.6*sin([0]/2)*sin([0]/2))",0,xmax);
+  fa1[2]->SetParameter(0,theta);
+  Q2inter= fa1[2]->Eval(xmax);
+  
+  //Lower theta curve
+  double theta_0=7.5*TMath::Pi()/180;
+  double xmax_0=(378.92 * sin(theta_0/2)*sin(theta_0/2))/(227.84 - 224.72*cos(theta_0));
+  fa1[3] = new TF1("fa1","4*0.938*10.6*10.6*x*sin([0]/2)*sin([0]/2)/(0.938*x + 2*10.6*sin([0]/2)*sin([0]/2))",0,xmax_0);
+  fa1[3]->SetParameter(0,theta_0);
+  fa1[3]->SetLineColor(kBlack);
+  fa1[3]->SetLineWidth(2);
+  fa1[3]->Draw("same");
+  double Q2inter_0= fa1[3]->Eval(xmax_0);
+
+  fa1[1] = new TF1("fa1","(4-0.938*0.938)/(1/x -1)",xmax_0,xmax);
+  fa1[1]->SetLineColor(kBlack);
+  fa1[1]->SetLineWidth(2);
+  fa1[1]->Draw("same");
+
+
+  for (UInt_t i = 0; i < NBINSQ; ++i)
+  {
+    line_Q[i] = new TLine(fa1[0]->GetX(bins_Q.at(i)), bins_Q.at(i), (bins_Q.at(i)>Q2inter_0)?fa1[1]->GetX(bins_Q.at(i)):fa1[3]->GetX(bins_Q.at(i)),bins_Q.at(i));
+    line_Q[i]->SetLineColor(kBlack);
+    line_Q[i]->Draw("same");
+  }
+  for (UInt_t i = 0; i < NBINSx; ++i)
+  {
+    line_xQ[i] = new TLine(bins_x.at(i), max(fa1[1]->Eval(bins_x.at(i)), fa1[3]->Eval(bins_x.at(i))), bins_x.at(i),min(fa1[0]->Eval(bins_x.at(i)),8.0));
+    line_xQ[i]->SetLineColor(kBlack);
+    line_xQ[i]->Draw("same");
+  }
+
+  TText* text1[35];
+  // Q2 in [1.000; 1.200] GeV^2
+  text1[0] = new TText(0.070, 1.0,"1-9");
+  text1[1] = new TText(0.095, 1.0,"10-15");
+
+  // Q2 in [1.200; 1.456] GeV^2
+  text1[2] = new TText(0.070 ,1.2,"16-24");
+  text1[3] = new TText(0.095,1.2,"25-33");
+  text1[4] = new TText(0.125,1.2,"34-42");
+  text1[5] = new TText(0.170,1.2,"43-51");
+
+  // Q2 in [1.456; 1.912] GeV^2
+  text1[6] = new TText(0.070 ,1.456,"52-60");
+  text1[7] = new TText(0.095 ,1.456,"61-69");
+  text1[8] = new TText(0.125 ,1.456,"70-78");
+  text1[9] = new TText(0.17, 1.456,"79-87");
+  text1[10]= new TText(0.24, 1.456,"88-95");
+  text1[11]= new TText(0.30, 1.456,"96-102");
+
+  // Q2 in [1.912; 2.510] GeV^2
+  text1[12] = new TText(0.095, 1.912,"103-111");
+  text1[13] = new TText(0.125, 1.912,"112-120");
+  text1[14] = new TText(0.170, 1.912,"121-129");
+  text1[15] = new TText(0.240, 1.912,"130-137");
+  text1[16] = new TText(0.300, 1.912,"138-144");
+  text1[17] = new TText(0.400, 1.912,"145-149");
+
+  // Q2 in [2.510; 3.295] GeV^2
+  text1[18] = new TText(0.17, 2.510,"150-158");
+  text1[19] = new TText(0.24, 2.510,"159-167");
+  text1[20] = new TText(0.30, 2.510,"168-175");
+  text1[21] = new TText(0.40, 2.510,"176-182");
+  text1[22] = new TText(0.50, 2.510,"183-190");
+
+  // Q2 in [3.295; 4.326] GeV^2
+  text1[23] = new TText(0.17, 3.295,"191-198");
+  text1[24] = new TText(0.24, 3.295,"199-206");
+  text1[25] = new TText(0.30, 3.295,"207-213");
+  text1[26] = new TText(0.40, 3.295,"214-218");
+  text1[27] = new TText(0.50, 3.295,"219-222");
+
+  // Q2 in [4.326; 5.761] GeV^2
+  text1[28] = new TText(0.24, 4.326,"223-229");
+  text1[29] = new TText(0.30, 4.326,"230-236");
+  text1[30] = new TText(0.40, 4.326,"237-241");
+  text1[31] = new TText(0.50, 4.326,"242-245");
+
+  // Q2 in [5.761; 7.000] GeV^2
+  text1[32] = new TText(0.30, 5.761,"246-250");
+  text1[33] = new TText(0.40, 5.761,"251-255");
+  text1[34] = new TText(0.50, 5.761,"256-259");
+
+  for(int i=0; i<35; i++)
+    {
+      text1[i]->SetTextColor(kBlack);
+      text1[i]->SetTextSize(0.015);
+      text1[i]->Draw("same");
+    }
+
+
+
+  c2->Print(Form("Summary_Plots/Q2xB_%i.png",l));
+  delete c2;
+  delete Q2xB;
+}    
+}

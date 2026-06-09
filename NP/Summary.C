@@ -4,21 +4,281 @@ TCut cut_NP=TCut("bestCandidateFlag==1 && mm2_eg>0 && N_Ph<3 && mm2_eg<3 && abs(
 double BDT_cut_P = 0.0;
 double BDT_cut_NP= 0.08;
 double BDT_cut_SIDIS=0.1;
-int NBins=94;
+int NBins=259;
 
 TString DVCS=TString("Analysis/Merged_DVCS.root");
 TString Pi0=TString("Analysis/Merged_Pi0.root");
 TString DATA=TString("Analysis/Merged_Data.root");
 TString SIDIS=TString("Analysis/Tsidis.root");
 
-TCut Mbins[94];
+TCut Mbins[259];
 TCut BDT_bin_cut;
 
-std::vector<double> bdts;
+std::vector<double> bdts={
+  0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.2,
+0.176,
+0.168,
+0.176,
+0.152,
+0.216,
+0.192,
+0.08,
+0.08,
+0.136,
+0.104,
+0.104,
+0.12,
+0.136,
+0.2,
+0.184,
+0.208,
+0.248,
+0.112,
+0.128,
+0.072,
+0.08,
+0.136,
+0.152,
+0.12,
+0.16,
+0.24,
+-0.024,
+-0.00799999,
+0.088,
+-0.256,
+0.096,
+0.04,
+0.032,
+0.224,
+-0.4,
+0.312,
+0.28,
+0.232,
+0.224,
+0.224,
+0.08,
+0.08,
+0.08,
+0.08,
+0.08,
+0.064,
+0.056,
+0.048,
+0.064,
+0.096,
+0.104,
+0.104,
+0.12,
+0.04,
+0.016,
+0.032,
+0.024,
+0.048,
+0.088,
+0.072,
+0.072,
+0.104,
+-0.00799999,
+-0.00799999,
+-0.016,
+0,
+-0.016,
+-0.00799999,
+-0.00799999,
+0.016,
+0.064,
+-0.04,
+-0.056,
+-0.056,
+-0.064,
+-0.04,
+-0.032,
+-0.032,
+-0.04,
+-0.112,
+-0.112,
+-0.08,
+-0.064,
+-0.064,
+-0.088,
+-0.104,
+0.28,
+0.248,
+0.216,
+0.224,
+0.232,
+0.08,
+0.08,
+0.08,
+0.08,
+0.072,
+0.04,
+0.048,
+0.048,
+0.056,
+0.096,
+0.096,
+0.096,
+0.12,
+0,
+-0.00799999,
+0,
+0.00799999,
+0.016,
+0.032,
+0.024,
+0.048,
+0.12,
+-0.048,
+-0.024,
+-0.032,
+-0.032,
+-0.032,
+-0.024,
+-0.024,
+0.00799999,
+-0.056,
+-0.08,
+-0.056,
+-0.048,
+-0.056,
+-0.056,
+-0.064,
+-0.12,
+-0.104,
+-0.096,
+-0.088,
+-0.064,
+0.264,
+0.264,
+0.2,
+0.216,
+0.216,
+0.312,
+0.08,
+0.08,
+0.08,
+0.04,
+0.04,
+0.024,
+0.032,
+0.056,
+0.088,
+0.088,
+0.112,
+0.232,
+0,
+-0.016,
+-0.016,
+0,
+0,
+0.016,
+0.00799999,
+0.064,
+-0.064,
+-0.056,
+-0.04,
+-0.04,
+-0.04,
+-0.024,
+0.024,
+-0.072,
+-0.088,
+-0.056,
+-0.064,
+-0.056,
+-0.16,
+-0.104,
+-0.12,
+0.224,
+0.088,
+0.176,
+0.192,
+0.232,
+0.328,
+0.288,
+0.08,
+0.024,
+0.032,
+0.024,
+0.032,
+0.04,
+0.104,
+0.104,
+0.256,
+-0.024,
+-0.032,
+-0.032,
+-0.016,
+-0.024,
+0.024,
+0.096,
+-0.104,
+-0.08,
+-0.064,
+-0.064,
+-0.048,
+-0.12,
+-0.08,
+-0.104,
+-0.088,
+0.128,
+0.208,
+0.216,
+0.224,
+0.224,
+0.352,
+0.304,
+0.016,
+0.00799999,
+0.016,
+0.032,
+0.056,
+0.16,
+0.272,
+-0.072,
+-0.064,
+-0.048,
+-0.024,
+0.016,
+-0.088,
+-0.08,
+-0.056,
+-0.048,
+-0.4,
+-0.4,
+0.296,
+0.344,
+0.08,
+-0.04,
+0.00799999,
+0.016,
+0.024,
+0.2,
+-0.08,
+-0.088,
+-0.064,
+-0.048
+};
 
 double get_bdt_event(double strip_Xbj, double strip_Q2, double t_Ph)
 {
-  for (int i = 0; i < 94; ++i)
+  for (int i = 0; i < 259; ++i)
   {
     // Parse the cut string for this bin
     TString cutStr = Mbins[i].GetTitle();
@@ -1431,8 +1691,8 @@ void Phase_Space(TTree* pDVCS, TTree* pDVCS_bkg)
   // -----------------------------------------------------------------------------------------------
 
   const int NBINSt=7;
-  const int NBINSQ=5;
-  const int NBINSx=5;
+  const int NBINSQ=8;
+  const int NBINSx=9;
 
   std::vector<double> bins_t = Binning_1D(pDVCS, "t",NBINSt);
   std::vector<double> bins_Q = Binning_1D(pDVCS, "Q",NBINSQ);
@@ -1449,10 +1709,10 @@ void Phase_Space(TTree* pDVCS, TTree* pDVCS_bkg)
   TLine* line_xt[NBINSx];
   TLine* line_xQ[NBINSx];
 
-  TH2F *Q2xB = new TH2F("Q2xB", "Q2xB", 100,0,1,100,0,13);
-  TH2F *Q2xB_bkg = new TH2F("Q2xB_bkg", "Q2xB_bkg", 100,0,1,100,0,13);
-  TH2F *mtxB = new TH2F("mtxB", "mtxB", 100,0,1,100,0,1);
-  TH2F *mtxB_bkg = new TH2F("mtxB_bkg", "mtxB_bkg", 100,0,1,100,0,1);
+  TH2F *Q2xB = new TH2F("Q2xB", "Q2xB", 100,0,0.65,100,0,8);
+  TH2F *Q2xB_bkg = new TH2F("Q2xB_bkg", "Q2xB_bkg", 100,0,0.65,100,0,8);
+  TH2F *mtxB = new TH2F("mtxB", "mtxB", 100,0,0.65,100,0,1);
+  TH2F *mtxB_bkg = new TH2F("mtxB_bkg", "mtxB_bkg", 100,0,0.65,100,0,1);
  
   pDVCS->Project("Q2xB", "strip_Q2:strip_Xbj", TheCut);
   pDVCS->Project("mtxB", "-t_Ph:strip_Xbj", TheCut);
@@ -1477,7 +1737,7 @@ void Phase_Space(TTree* pDVCS, TTree* pDVCS_bkg)
   mtxB->Draw("COLZ");
   for (UInt_t i = 0; i < NBINSt; ++i)
   {
-    line_t[i] = new TLine(0,-1.0*bins_t.at(i),1,-1.0*bins_t.at(i));
+    line_t[i] = new TLine(0,-1.0*bins_t.at(i),0.65,-1.0*bins_t.at(i));
     line_t[i]->SetLineColor(kBlack);
     line_t[i]->Draw("same");
   }
@@ -1498,104 +1758,115 @@ void Phase_Space(TTree* pDVCS, TTree* pDVCS_bkg)
   double theta;
 
 
-  theta=40*TMath::Pi()/180;
+  theta=37*TMath::Pi()/180;
   xmax=(378.92 * sin(theta/2)*sin(theta/2))/(227.84 - 224.72*cos(theta));
   fa1[0] = new TF1("fa1","4*0.938*10.6*10.6*x*sin([0]/2)*sin([0]/2)/(0.938*x + 2*10.6*sin([0]/2)*sin([0]/2))",0,xmax);
-  fa1[0]->SetParameter(0,40*TMath::Pi()/180);
+  fa1[0]->SetParameter(0,theta);
   fa1[0]->SetLineColor(kBlack);
   fa1[0]->SetLineWidth(2);
   fa1[0]->Draw("same");
 
-  fa1[1] = new TF1("fa1","(4-0.938*0.938)/(1/x -1)",0,xmax);
-  fa1[1]->SetLineColor(kBlack);
-  fa1[1]->SetLineWidth(2);
-  fa1[1]->Draw("same");
-
   Q2inter= fa1[0]->Eval(xmax);
-  th_edge[0] = new TLatex(xmax+0.02,Q2inter,Form("#theta_{e}=%.2f#circ",40.));
+  th_edge[0] = new TLatex(xmax+0.02,Q2inter,Form("#theta_{e}=%.2f#circ",35.));
   th_edge[0]->SetTextSize(0.04);
   th_edge[0]->Draw("same");
 
   fa1[2] = new TF1("fa1","4*0.938*10.6*10.6*x*sin([0]/2)*sin([0]/2)/(0.938*x + 2*10.6*sin([0]/2)*sin([0]/2))",0,xmax);
-  fa1[2]->SetParameter(0,30*TMath::Pi()/180);
-  theta=30*TMath::Pi()/180;
-  xmax=(378.92 * sin(theta/2)*sin(theta/2))/(227.84 - 224.72*cos(theta));
+  fa1[2]->SetParameter(0,theta);
   Q2inter= fa1[2]->Eval(xmax);
   th_edge[1] = new TLatex(xmax+0.02,Q2inter,"W=2 GeV");
   th_edge[1]->SetTextSize(0.04);
   th_edge[1]->Draw("same");
   
+  //Lower theta curve
+  double theta_0=7.5*TMath::Pi()/180;
+  double xmax_0=(378.92 * sin(theta_0/2)*sin(theta_0/2))/(227.84 - 224.72*cos(theta_0));
+  fa1[3] = new TF1("fa1","4*0.938*10.6*10.6*x*sin([0]/2)*sin([0]/2)/(0.938*x + 2*10.6*sin([0]/2)*sin([0]/2))",0,xmax_0);
+  fa1[3]->SetParameter(0,theta_0);
+  fa1[3]->SetLineColor(kBlack);
+  fa1[3]->SetLineWidth(2);
+  fa1[3]->Draw("same");
+  double Q2inter_0= fa1[3]->Eval(xmax_0);
+
+  fa1[1] = new TF1("fa1","(4-0.938*0.938)/(1/x -1)",xmax_0,xmax);
+  fa1[1]->SetLineColor(kBlack);
+  fa1[1]->SetLineWidth(2);
+  fa1[1]->Draw("same");
+
 
   for (UInt_t i = 0; i < NBINSQ; ++i)
   {
-    line_Q[i] = new TLine(fa1[0]->GetX(bins_Q.at(i)), bins_Q.at(i), fa1[1]->GetX(bins_Q.at(i)),bins_Q.at(i));
+    line_Q[i] = new TLine(fa1[0]->GetX(bins_Q.at(i)), bins_Q.at(i), (bins_Q.at(i)>Q2inter_0)?fa1[1]->GetX(bins_Q.at(i)):fa1[3]->GetX(bins_Q.at(i)),bins_Q.at(i));
     line_Q[i]->SetLineColor(kBlack);
     line_Q[i]->Draw("same");
   }
   for (UInt_t i = 0; i < NBINSx; ++i)
   {
-    line_xQ[i] = new TLine(bins_x.at(i), fa1[1]->Eval(bins_x.at(i)), bins_x.at(i),fa1[0]->Eval(bins_x.at(i)));
+    line_xQ[i] = new TLine(bins_x.at(i), max(fa1[1]->Eval(bins_x.at(i)), fa1[3]->Eval(bins_x.at(i))), bins_x.at(i),min(fa1[0]->Eval(bins_x.at(i)),8.0));
     line_xQ[i]->SetLineColor(kBlack);
     line_xQ[i]->Draw("same");
   }
 
-  TText* text1 = new TText(0.07,1.1,"1-7");
-  TText* text2 = new TText(0.12,1.1,"8-14");
-  TText* text3 = new TText(0.2 ,1.1,"15-21");
-  TText* text4 = new TText(0.32,1.1,"22-26");
+  TText* text1[35];
+  // Q2 in [1.000; 1.200] GeV^2
+  text1[0] = new TText(0.070, 1.0,"1-9");
+  text1[1] = new TText(0.095, 1.0,"10-15");
 
-  TText* text5 = new TText(0.04,1.9,"27-33");
-  TText* text6 = new TText(0.12,1.9,"34-40");
-  TText* text7 = new TText(0.2 ,1.9,"41-47");
-  TText* text8 = new TText(0.3 ,1.9,"48-52");
+  // Q2 in [1.200; 1.456] GeV^2
+  text1[2] = new TText(0.070 ,1.2,"16-24");
+  text1[3] = new TText(0.095,1.2,"25-33");
+  text1[4] = new TText(0.125,1.2,"34-42");
+  text1[5] = new TText(0.170,1.2,"43-51");
 
-  TText* text9 = new TText(0.08 ,2.5,"53-59");
-  TText* text10 = new TText(0.2,2.5,"60-66");
-  TText* text11 = new TText(0.3,2.5,"67-71");
-  TText* text12 = new TText(0.48,2.5,"72-73");
+  // Q2 in [1.456; 1.912] GeV^2
+  text1[6] = new TText(0.070 ,1.456,"52-60");
+  text1[7] = new TText(0.095 ,1.456,"61-69");
+  text1[8] = new TText(0.125 ,1.456,"70-78");
+  text1[9] = new TText(0.17, 1.456,"79-87");
+  text1[10]= new TText(0.24, 1.456,"88-95");
+  text1[11]= new TText(0.30, 1.456,"96-102");
 
-  TText* text13 = new TText(0.2 ,3.3,"74-80");
-  TText* text14 = new TText(0.3 ,3.3,"81-85");
-  TText* text15 = new TText(0.47,3.3,"86-87");
+  // Q2 in [1.912; 2.510] GeV^2
+  text1[12] = new TText(0.095, 1.912,"103-111");
+  text1[13] = new TText(0.125, 1.912,"112-120");
+  text1[14] = new TText(0.170, 1.912,"121-129");
+  text1[15] = new TText(0.240, 1.912,"130-137");
+  text1[16] = new TText(0.300, 1.912,"138-144");
+  text1[17] = new TText(0.400, 1.912,"145-149");
 
-  TText* text16 = new TText(0.3,5.1,"88-92");
-  TText* text17 = new TText(0.47,5.1,"93-94");
+  // Q2 in [2.510; 3.295] GeV^2
+  text1[18] = new TText(0.17, 2.510,"150-158");
+  text1[19] = new TText(0.24, 2.510,"159-167");
+  text1[20] = new TText(0.30, 2.510,"168-175");
+  text1[21] = new TText(0.40, 2.510,"176-182");
+  text1[22] = new TText(0.50, 2.510,"183-190");
 
-  text1->SetTextSize(0.025);
-  text2->SetTextSize(0.025);
-  text3->SetTextSize(0.025);
-  text4->SetTextSize(0.025);
-  text5->SetTextSize(0.025);
-  text6->SetTextSize(0.025);
-  text7->SetTextSize(0.025);
-  text8->SetTextSize(0.025);
-  text9->SetTextSize(0.025);
-  text10->SetTextSize(0.025);
-  text11->SetTextSize(0.025);
-  text12->SetTextSize(0.025);
-  text13->SetTextSize(0.025);
-  text14->SetTextSize(0.025);
-  text15->SetTextSize(0.025);
-  text16->SetTextSize(0.025);
-  text17->SetTextSize(0.025);
+  // Q2 in [3.295; 4.326] GeV^2
+  text1[23] = new TText(0.17, 3.295,"191-198");
+  text1[24] = new TText(0.24, 3.295,"199-206");
+  text1[25] = new TText(0.30, 3.295,"207-213");
+  text1[26] = new TText(0.40, 3.295,"214-218");
+  text1[27] = new TText(0.50, 3.295,"219-222");
 
-  text1->Draw("same");
-  text2->Draw("same");
-  text3->Draw("same");
-  text4->Draw("same");
-  text5->Draw("same");
-  text6->Draw("same");
-  text7->Draw("same");
-  text8->Draw("same");
-  text9->Draw("same");
-  text10->Draw("same");
-  text11->Draw("same");
-  text12->Draw("same");
-  text13->Draw("same");
-  text14->Draw("same");
-  text15->Draw("same");
-  text16->Draw("same");
-  text17->Draw("same");
+  // Q2 in [4.326; 5.761] GeV^2
+  text1[28] = new TText(0.24, 4.326,"223-229");
+  text1[29] = new TText(0.30, 4.326,"230-236");
+  text1[30] = new TText(0.40, 4.326,"237-241");
+  text1[31] = new TText(0.50, 4.326,"242-245");
+
+  // Q2 in [5.761; 7.000] GeV^2
+  text1[32] = new TText(0.30, 5.761,"246-250");
+  text1[33] = new TText(0.40, 5.761,"251-255");
+  text1[34] = new TText(0.50, 5.761,"256-259");
+
+  for(int i=0; i<35; i++)
+    {
+      text1[i]->SetTextColor(kBlack);
+      text1[i]->SetTextSize(0.015);
+      text1[i]->Draw("same");
+    }
+
+
 
   c2->Print("Summary_Plots/Q2xB.pdf");
 
@@ -1626,22 +1897,10 @@ void Phase_Space(TTree* pDVCS, TTree* pDVCS_bkg)
   {
     delete th_edge[i];
   }
-  delete text1;
-  delete text2;
-  delete text3;
-  delete text4;
-  delete text5;
-  delete text6;
-  delete text7;
-  delete text8;
-  delete text9;
-  delete text10;
-  delete text11;
-  delete text12;
-  delete text13;
-  delete text14;
-  delete text15;
-  delete text16;
+  for (int i=0; i<35; i++)
+  {
+    delete text1[i];
+  }
   
 }
 
@@ -1655,122 +1914,306 @@ void Phase_Space(TTree* pDVCS, TTree* pDVCS_bkg)
 void Summary()
 {
 
-   Mbins[0]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[1]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[2]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[3]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[4]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[5]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[6]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
+Mbins[0]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[1]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[2]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[3]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[4]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[5]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[6]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[7]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[8]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 
-Mbins[7]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[8]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[9]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[10]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[11]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[12]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[13]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
+Mbins[9]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[10]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[11]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[12]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[13]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[14]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.000000 && strip_Q2<1.200000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
-Mbins[14]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[15]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[16]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[17]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[18]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[19]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[20]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
+Mbins[15]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[16]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[17]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[18]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[19]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[20]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[21]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[22]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[23]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 
-Mbins[21]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[22]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[23]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[24]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[25]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.000000 && strip_Q2<1.600000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
+Mbins[24]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[25]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[26]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[27]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[28]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[29]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[30]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[31]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[32]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
-Mbins[26]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[27]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[28]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[29]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[30]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[31]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
-Mbins[32]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.0512   && strip_Xbj<0.120000");
+Mbins[33]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[34]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[35]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[36]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[37]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[38]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[39]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[40]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[41]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 
-Mbins[33]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[34]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[35]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[36]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[37]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[38]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[39]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
+Mbins[42]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[43]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[44]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[45]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[46]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[47]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[48]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[49]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[50]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.200000 && strip_Q2<1.456000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 
-Mbins[40]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[41]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[42]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[43]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[44]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[45]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[46]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
+Mbins[51]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[52]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[53]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[54]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[55]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[56]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[57]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[58]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
+Mbins[59]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.062000   && strip_Xbj<0.090000");
 
-Mbins[47]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[48]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[49]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[50]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[51]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>1.600000 && strip_Q2<2.400000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
+Mbins[60]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[61]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[62]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[63]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[64]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[65]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[66]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[67]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[68]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
-Mbins[52]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[53]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[54]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[55]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[56]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[57]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
-Mbins[58]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.120000   && strip_Xbj<0.170000");
+Mbins[69]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[70]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[71]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[72]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[73]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[74]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[75]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[76]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[77]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 
-Mbins[59]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[60]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[61]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[62]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[63]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[64]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[65]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
+Mbins[78]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[79]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[80]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[81]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[82]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[83]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[84]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[85]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[86]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 
-Mbins[66]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[67]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[68]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[69]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[70]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
+Mbins[87]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[88]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[89]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[90]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[91]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[92]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[93]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[94]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
 
-Mbins[71]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.450000   && strip_Xbj<0.6");
-Mbins[72]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.400000 && strip_Q2<3.250000 && strip_Xbj>0.450000   && strip_Xbj<0.6");
+Mbins[95]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[96]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[97]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[98]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[99]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[100]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[101]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.456000 && strip_Q2<1.912000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
 
-Mbins[73]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[74]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[75]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[76]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[77]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[78]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
-Mbins[79]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.170000   && strip_Xbj<0.270000");
+Mbins[102]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[103]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[104]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[105]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[106]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[107]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[108]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[109]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
+Mbins[110]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.090000   && strip_Xbj<0.118000");
 
-Mbins[80]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[81]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[82]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[83]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[84]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
+Mbins[111]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[112]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[113]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[114]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[115]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[116]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[117]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[118]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[119]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
 
-Mbins[85]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.450000   && strip_Xbj<0.6");
-Mbins[86]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.250000 && strip_Q2<5.000000 && strip_Xbj>0.450000   && strip_Xbj<0.6");
+Mbins[120]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[121]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[122]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[123]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[124]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[125]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[126]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[127]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[128]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
 
-Mbins[87]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>5.000000 && strip_Q2<9.0000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[88]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>5.000000 && strip_Q2<9.0000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[89]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.170000 && strip_Q2>5.000000 && strip_Q2<9.0000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[90]= TCut("bestCandidateFlag==1 && t_Ph>-0.170000 && t_Ph<-0.120000 && strip_Q2>5.000000 && strip_Q2<9.0000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
-Mbins[91]= TCut("bestCandidateFlag==1 && t_Ph>-0.120000 && t_Ph<-0.070000 && strip_Q2>5.000000 && strip_Q2<9.0000000 && strip_Xbj>0.270000   && strip_Xbj<0.450000");
+Mbins[129]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[130]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[131]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[132]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[133]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[134]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[135]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[136]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
 
-Mbins[92]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.400000 && strip_Q2>5.000000 && strip_Q2<9.0000000 && strip_Xbj>0.450000   && strip_Xbj<0.6");
-Mbins[93]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>5.000000 && strip_Q2<9.0000000 && strip_Xbj>0.450000   && strip_Xbj<0.6");
+Mbins[137]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[138]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[139]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[140]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[141]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[142]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[143]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+
+Mbins[144]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[145]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[146]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[147]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[148]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>1.912000 && strip_Q2<2.510000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+
+Mbins[149]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[150]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[151]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[152]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[153]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[154]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[155]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[156]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+Mbins[157]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.118000   && strip_Xbj<0.155000");
+
+Mbins[158]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[159]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[160]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[161]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[162]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[163]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[164]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[165]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[166]= TCut("bestCandidateFlag==1 && t_Ph>-0.040000 && t_Ph<0.000000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+
+Mbins[167]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[168]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[169]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[170]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[171]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[172]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[173]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[174]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+
+Mbins[175]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[176]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[177]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[178]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[179]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[180]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[181]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+
+Mbins[182]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[183]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[184]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[185]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[186]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[187]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[188]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[189]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>2.510000 && strip_Q2<3.295000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+
+Mbins[190]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[191]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[192]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[193]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[194]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[195]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[196]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+Mbins[197]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.155000   && strip_Xbj<0.204000");
+
+Mbins[198]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[199]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[200]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[201]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[202]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[203]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[204]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[205]= TCut("bestCandidateFlag==1 && t_Ph>-0.070000 && t_Ph<-0.040000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+
+Mbins[206]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[207]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[208]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[209]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[210]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[211]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[212]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+
+Mbins[213]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[214]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[215]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[216]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[217]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+
+Mbins[218]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[219]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[220]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[221]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>3.295000 && strip_Q2<4.326000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+
+Mbins[222]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[223]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[224]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[225]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[226]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[227]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+Mbins[228]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.204000   && strip_Xbj<0.268000");
+
+Mbins[229]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[230]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[231]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[232]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[233]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[234]= TCut("bestCandidateFlag==1 && t_Ph>-0.150000 && t_Ph<-0.110000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[235]= TCut("bestCandidateFlag==1 && t_Ph>-0.110000 && t_Ph<-0.070000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+
+Mbins[236]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[237]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[238]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[239]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[240]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+
+Mbins[241]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[242]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[243]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[244]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>4.326000 && strip_Q2<5.761000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+
+Mbins[245]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[246]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[247]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[248]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+Mbins[249]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.268000   && strip_Xbj<0.357000");
+
+Mbins[250]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[251]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[252]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[253]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+Mbins[254]= TCut("bestCandidateFlag==1 && t_Ph>-0.250000 && t_Ph<-0.150000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.357000   && strip_Xbj<0.446000");
+
+Mbins[255]= TCut("bestCandidateFlag==1 && t_Ph>-1.000000 && t_Ph<-0.800000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[256]= TCut("bestCandidateFlag==1 && t_Ph>-0.800000 && t_Ph<-0.600000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[257]= TCut("bestCandidateFlag==1 && t_Ph>-0.600000 && t_Ph<-0.400000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
+Mbins[258]= TCut("bestCandidateFlag==1 && t_Ph>-0.400000 && t_Ph<-0.250000 && strip_Q2>5.761000 && strip_Q2<7.000000 && strip_Xbj>0.446000   && strip_Xbj<0.581000");
 
 
-for(int i=1; i<=94; i++)
-{
-  bdts.push_back(Best_BDT(i));
-}
+//for(int i=1; i<=259; i++)
+//{
+//  bdts.push_back(Best_BDT(i));
+//}
+
 /*
 BDT_bin_cut = "";
 for (int i = 0; i < NBins; ++i) {
@@ -1807,6 +2250,22 @@ for (int i = 0; i < NBins; ++i) {
   }
 
 
+  //Q2xB and mtxB Phase Space plots
+  std::cout<<"Q2xB and mtxB Phase Space plots"<<std::endl;
+  Phase_Space(Data_Tree, Data_bkg);
+  std::cout<<"\n"<<std::endl;
+  
+  /*
+  //Q2, xB, t and mm2_eg P vs NP before and after BDT
+  std::cout<<"Q2, xB, t and mm2_eg P vs NP before and after BDT"<<std::endl;
+  Comparison_2(Data_Tree, Data_bkg);
+  std::cout<<"\n"<<std::endl;
+
+  //Integrated Excl. Variables
+  std::cout<<"Integrated Excl. Variables"<<std::endl;
+  Excl_vars_aft_BDT(Data_Tree, DVCS_Tree, Data_bkg);
+  std::cout<<"\n"<<std::endl;
+
   //2D final state kinematics
   std::cout<<"2D final state kinematics"<<std::endl;
   Kinematics(Data_Tree, Data_bkg);
@@ -1815,17 +2274,6 @@ for (int i = 0; i < NBins; ++i) {
   //1D final state kinematics after bkg subtraction
   std::cout<<"1D final state kinematics after bkg subtraction"<<std::endl;
   Kin_Comparison_2(Data_Tree, Data_bkg);
-  std::cout<<"\n"<<std::endl;
-
-  /*
-  //Q2, xB, t and mm2_eg P vs NP before and after BDT
-  std::cout<<"Q2, xB, t and mm2_eg P vs NP before and after BDT"<<std::endl;
-  Comparison_2(Data_Tree, Data_bkg);
-  std::cout<<"\n"<<std::endl;
-
-  //Q2xB and mtxB Phase Space plots
-  std::cout<<"Q2xB and mtxB Phase Space plots"<<std::endl;
-  Phase_Space(Data_Tree, Data_bkg);
   std::cout<<"\n"<<std::endl;
 
   //Training variables vs BDT score on Data
@@ -1846,11 +2294,6 @@ for (int i = 0; i < NBins; ++i) {
   //Angles vs BDT in topologies for Data, DVCS and Pi0
   std::cout<<"Angles vs BDT in topologies for Data, DVCS and Pi0"<<std::endl;
   Kinematics_2(Data_Tree, DVCS_Tree, Pi0_Tree);
-  std::cout<<"\n"<<std::endl;
-
-    //Integrated Excl. Variables
-  std::cout<<"Integrated Excl. Variables"<<std::endl;
-  Excl_vars_aft_BDT(Data_Tree, DVCS_Tree, Data_bkg);
   std::cout<<"\n"<<std::endl;
 
   */

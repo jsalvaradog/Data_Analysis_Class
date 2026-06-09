@@ -3,7 +3,7 @@
 void BDT::Add_BDT_var_Formula(TCut cutSB, TString Data, TString output, vector<TString> vars)
 {
 
-  cout << "-Start TMVA-" << endl;
+  cout << "\n-Start TMVA-" << endl;
 
   cout << " Adding Variables to Reader" << endl;
   // --- Create the Reader object
@@ -48,18 +48,19 @@ void BDT::Add_BDT_var_Formula(TCut cutSB, TString Data, TString output, vector<T
   else
     signal     = (TTree*)input4->Get("eppi0");
  
-  Long64_t nentries = signal->GetEntries();
+  int nentries = signal->GetEntries();
   cout << "Reading File with " << nentries << " to Add MVA response" << endl;
   cout << " Reading Variables" << endl;
 
+  TFile f(Folder + output, "RECREATE");
 
-  // for DVCS channels
-  signal->SetBranchStatus("*", 1); // enable all branches  
-  if (signal->GetListOfBranches()->FindObject("_strip_Nuc_BDT")) {
-    signal->SetBranchStatus("_strip_Nuc_BDT", 0);
+  if(nentries == 0)
+  {
+    signal->Write();
+    f.Close();
+    return;
   }
 
-  TFile f(Folder + output, "RECREATE");
   TTree *Tree = signal->CopyTree(cutSB);
 
   Tree->SetBranchStatus("*", 1); // enable all branches
@@ -113,6 +114,7 @@ void BDT::Add_BDT_var_Formula(TCut cutSB, TString Data, TString output, vector<T
       {
         _strip_Nuc_BDT = 2;
       }
+      //std::cout<<_strip_Nuc_BDT<<endl;
 	    
 	    newBranch->Fill();
 	  }
@@ -123,7 +125,7 @@ void BDT::Add_BDT_var_Formula(TCut cutSB, TString Data, TString output, vector<T
   Tree->Write();
   cout << "closing file" << endl;
 
-  cout << "Added " << Tree->GetEntries() << " MVA variables to file" << endl;
+  cout << "Added " << Tree->GetEntries() << " MVA variables to file\n" << endl;
   delete reader1;
   delete signal;
   input4->Close();
