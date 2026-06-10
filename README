@@ -8,6 +8,8 @@ It receives as input several .root files corresponding to
 -DVCS datasets (with RC effects) used for Bin Migration and Aceptance corrections.
 -DVetaP datasets (simulated and experimental) for eta background estimation via Hall B method.
 
+P and NP folders correspond to the code used for the case with and without proton respectively
+
 ** It asummes the ROOT tree names 'pDVCS', 'eppi0' and 'epeta'** 
 
 
