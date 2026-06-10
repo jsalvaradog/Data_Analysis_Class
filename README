@@ -29,8 +29,6 @@ l.config()
 # config.C must be configured before launching ROOT.
 
 3. Run methods as you need. A list of some methods if found at the end.
-
-
 ** EXAMPLES **
 * SINGLE EVALUATION OF A BDT TRAINING *
 * used to obtain a global training (insted of a bin-by-bin  dedicated analysis) *
@@ -91,6 +89,7 @@ eta (boolean) -> Estimate eta contamination?
 
 # To evaluate systematic errors over bins
 # It evaluates systematics from cuts, BDT cut, and PID refinement cuts
+# You need to define the systematic cut on the config file
 void Compute_Systematics(TString Data, int NBinsPhi=0, int bin=0, bool build=true);
 Data -> Experimental dataset
 NPhiBins -> Number of bins in phi. Default 0 (read Nphibins array on config.C)
@@ -113,6 +112,7 @@ l.TrainingCategory(l.cut, l.DVCS, l.Pi0, l.Vars);
 l.Training_vars(l.Data, l.DVCS, l.Pi0, l.cut);
 
 # To create a new .root file including the BDT score of an existing training.
+# Last time I tried, adding the BDT variable to the same .root file created problems.
 l.Add_BDT_var(l.cut, l.Data, l.TData, l.Vars);
 l.Add_BDT_var(l.cut, l.DVCS, l.TDVCS, l.Vars);
 
@@ -125,19 +125,37 @@ l.Filter(l.TData, l.cut + TCut("_strip_Nuc_BDT > 0.08"), TString("Data_NP_Theta_
 # To merge .root files of all bins in a single file.
 l.Merge_Bins(l.TData,"Merged_Data.root");
 
+# Get BSA from a .root file
+Single_BSA(dataset,NBinsPhi)
+
+# Get background-subtracted BSA measurements via Hall A method.
+# REQUIRES THREE-STEP PREPARATION
+l.Get_Contamination_Maxime(l.cut, l.BDT_value, bin_number, NBinsPhi);
+
+# To extract background-subtracted BSA measurements via Hall B method.
+l.Get_Contamination_Mostafa(l.cut, l.BDT_value, NBinsPhi, eta); 
+
+** ROOUNFOLD AND BIN MIGRATION **
+# By default, neither RooUnfold or Tunfold are avaialble in clas12root, so the library has to be installed.
+# I included in the folder a copy of the RooUnfold repository
+# To compile it do on a clean terminal: 
+# mkdir build
+# cd build
+# cmake ---DCMAKE_INSTALL_PREFIX=/cvmfs/oasis.opensciencegrid.org/jlab/hallb/clas12/sw/almalinux9-gcc11/local/root/6.36.04/bin/root ..
+# make -j4
+# cd ..
+# source build/setup.sh
+# copy build/libRooUnfold_rdict.pcm and build/libRooUnfold.so* to the base folder (where BDT.h is located)
+#
+# If compilation fails, try on a clean bash terminal, as the defauls farm terminal is tcsh.
+# It was needed to include the directory of root on the cmake command
+# You can get the root directory with the command "which root"
+# I DID NOT IMPLEMENT TUNFOLD !!
+#
 # Compute Bin Migration matrix
 # There are templates for 1D, 3D (Q2,xB,t) and 4D (Q2,xB,t,phi) bin migration
 # My analysis showed negligible bin migration, so it was actually never used implemented.
 # However, it was tested and cross-checked
 # It requires a merged BM file beforehand.
 l.Compute_BM_Matrix();
-
-# Get BSA from a .root file
-Single_BSA(dataset,NBinsPhi)
-
-# Get background-subtracted BSA measurements via Hall A method.
-l.Get_Contamination_Maxime(l.cut, l.BDT_value, bin_number, NBinsPhi);
-
-# To extract background-subtracted BSA measurements via Hall B method.
-l.Get_Contamination_Mostafa(l.cut, l.BDT_value, NBinsPhi, eta); 
 
